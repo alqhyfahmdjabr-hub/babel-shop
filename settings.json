@@ -1,0 +1,39 @@
+{
+  "css.validate": false,
+  "scss.validate": false,
+  "less.validate": false,
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  "tailwindCSS.includeLanguages": {
+    "plaintext": "html"
+  },
+  "tailwindCSS.validate": true,
+  "files.associations": {
+    "*.css": "postcss"
+  },
+  "emmet.includeLanguages": {
+    "postcss": "css"
+  },
+  
+  "json.schemaDownload.enable": true,
+  "json.schemaDownload.trustedDomains": [
+    "json.schemastore.org",
+    "schemastore.org",
+    "www.schemastore.org"
+  ],
+  "json.schemas": [
+    {
+      "fileMatch": ["package.json"],
+      "url": "https://json.schemastore.org/package.json"
+    },
+    {
+      "fileMatch": ["tsconfig.json"],
+      "url": "https://json.schemastore.org/tsconfig.json"
+    },
+    {
+      "fileMatch": ["tsconfig.node.json"],
+      "url": "https://json.schemastore.org/tsconfig.json"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "short_name": "بابل",
+  "name": "مجوهرات بابل",
+  "icons": [
+    {
+      "src": "https://i.postimg.cc/25Knz1yL/babl3.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://i.postimg.cc/25Knz1yL/babl3.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0a0a0a",
+  "background_color": "#0a0a0a"
+}
