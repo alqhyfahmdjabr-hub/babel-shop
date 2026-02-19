@@ -319,13 +319,16 @@ const App: React.FC = () => {
     setAuthError('');
 
     try {
-      if (userRole === 'admin') {
+      // 1. جلب كلمة المرور الصحيحة من قاعدة البيانات
+      const correctPassword = await api.getAdminPassword();
+
+      if (password === correctPassword || userRole === 'admin') {
         setIsPasswordModalOpen(false);
         setPassword('');
         if (passwordTarget === 'settings') setIsSettingsOpen(true);
         else setIsAdminOpen(true);
       } else {
-        setAuthError('ليس لديك صلاحية المدير');
+        setAuthError('كلمة المرور غير صحيحة أو ليس لديك صلاحية المدير');
       }
     } finally {
       setIsAuthLoading(false);

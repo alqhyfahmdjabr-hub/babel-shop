@@ -12,6 +12,26 @@ const TABLE_PROFILES = 'profiles';
  * API Service - خدمة الاتصال بقاعدة البيانات
  */
 export const api = {
+  async getAdminPassword(): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from(TABLE_SETTINGS)
+        .select('value')
+        .eq('key', 'admin_config')
+        .single();
+
+      if (error) {
+        console.error('Error fetching admin password:', error);
+        return null;
+      }
+
+      // بما أن البيانات محفوظة كـ JSONB، نستخرج كلمة المرور بهذا الشكل
+      return data?.value?.password || null;
+    } catch (err) {
+      console.error('Unexpected error fetching password:', err);
+      return null;
+    }
+  },
   // --- التحقق من رتبة المستخدم ---
   async getUserRole(): Promise<string | null> {
     try {
