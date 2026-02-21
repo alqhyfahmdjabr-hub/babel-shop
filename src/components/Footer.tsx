@@ -25,9 +25,9 @@ export const Footer: React.FC<FooterProps> = ({ contact }) => {
           <div className="flex flex-col gap-2">
             <span className="text-gray-400 font-bold">خدمة العملاء (واتساب/اتصال):</span>
             <div className="flex flex-wrap justify-center gap-4">
-              {contact.workers.map((num, idx) => (
-                <a key={idx} href={`tel:${num}`} dir="ltr" className="bg-white/5 px-3 py-1 rounded-full text-gray-300 font-mono text-xs border border-white/10 hover:border-gold-500/50 transition-colors">
-                  {num}
+              {contact.workers.map((worker) => (
+                <a key={worker.id} href={`tel:${worker.phone}`} dir="ltr" className="bg-white/5 px-3 py-1 rounded-full text-gray-300 font-mono text-xs border border-white/10 hover:border-gold-500/50 transition-colors">
+                  {worker.phone}
                 </a>
               ))}
             </div>

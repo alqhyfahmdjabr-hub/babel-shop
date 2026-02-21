@@ -63,7 +63,7 @@ export const PRODUCTS: Product[] = [
     weight: 22.0,
     priceEstimate: 2300000,
     imageUrl: 'https://picsum.photos/id/4/600/600',
-    description: 'عقد ذهب عيار 21 ممزوج بحبات اللؤلؤ الصنااعي عالي الجودة.',
+    description: 'عقد ذهب عيار 21 ممزوج بحبات اللؤلؤ الصناعي عالي الجودة.',
     karat: 21
   },
   {
@@ -95,10 +95,14 @@ export const MOCK_PRICES: GoldPrice[] = [
   { karat: 18, buy: 25800, sell: 26500 },
 ];
 
+export const WHATSAPP_COUNTRY_CODE = '967'; // إضافة كود الدولة كمرجع ثابت
 // Contact Information
 export const CONTACT_INFO: ContactInfo = {
   manager: '777772879',
-  workers: ['774198414', '774386432'],
+  workers: [
+    { id: '1', name: 'نايف ', phone: '774198414' },
+    { id: '2', name: 'عباس', phone: '774386432' }
+  ],
   landlines: ['02451445', '02451944'],
   designer: {
     name: 'احمد جابر',

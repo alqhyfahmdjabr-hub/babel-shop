@@ -146,14 +146,14 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
             </h4>
             
             <div className="space-y-3">
-              {contact.workers.map((workerPhone, idx) => (
+              {contact.workers.map((worker) => (
                 <button
-                  key={idx}
-                  onClick={() => handleWorkerSelect(workerPhone)}
+                  key={worker.id}
+                  onClick={() => handleWorkerSelect(worker.phone)}
                   className="w-full py-4 rounded-2xl bg-white/[0.03] hover:bg-gold-500/10 border border-white/[0.05] hover:border-gold-500/30 text-gold-100/90 text-sm font-medium transition-all duration-500 flex items-center justify-center gap-2 group"
                 >
                   <MessageCircle className="w-4 h-4 text-gold-500/50 group-hover:text-gold-500" strokeWidth={1} />
-                  <span>الموظف {idx + 1}</span>
+                  <span>الموظف {worker.name} - {worker.phone}</span>
                 </button>
               ))}
             </div>

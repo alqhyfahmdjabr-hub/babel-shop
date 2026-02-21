@@ -577,13 +577,13 @@ export const RequestSection: React.FC<RequestSectionProps> = ({ contact }) => {
         <h4 className="text-gold-300 font-bold mb-4 text-center">اختر العامل للتواصل</h4>
 
         <div className="space-y-2">
-          {contact.workers.map((workerPhone, idx) => (
+          {contact.workers.map((worker) => (
             <button
-              key={idx}
-              onClick={() => handleWorkerSelect(workerPhone)}
+              key={worker.id}
+              onClick={() => handleWorkerSelect(worker.phone)}
               className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-bold transition"
             >
-              العامل {idx + 1} - {workerPhone}
+             العامل {worker.name} - {worker.phone}
             </button>
           ))}
         </div>

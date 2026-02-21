@@ -33,7 +33,11 @@ export interface ClientRequest {
 // Contact Info Types
 export interface ContactInfo {
   manager: string;
-  workers: string[];
+  workers: Array<{
+    id: string;
+    name: string;
+    phone: string;
+  }>; // أصبح مصفوفة كائنات تحتوي اسم ورقم
   landlines: string[];
   designer: {
     name: string;
