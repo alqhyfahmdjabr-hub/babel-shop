@@ -16,6 +16,8 @@ export const RequestSection: React.FC<RequestSectionProps> = ({ contact }) => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [lastOrder, setLastOrder] = useState<ClientRequest | null>(null);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [isWorkerModalOpen, setIsWorkerModalOpen] = useState(false);
+  const [pendingWhatsAppMessage, setPendingWhatsAppMessage] = useState('');
   const [processingMessage, setProcessingMessage] = useState('جاري معالجة الصورة...');
 
   const [myOrders, setMyOrders] = useState<ClientRequest[]>([]);
@@ -255,7 +257,7 @@ export const RequestSection: React.FC<RequestSectionProps> = ({ contact }) => {
         weight: parseFloat(formData.weight),
         imageUrl: finalImageUrl,
         notes: formData.notes,
-        date: new Date().toLocaleDateString('ar-YE'),
+        date: new Date().toISOString(),
         status: 'new',
         id: ''
       };
@@ -289,11 +291,12 @@ export const RequestSection: React.FC<RequestSectionProps> = ({ contact }) => {
   };
 
   const isOrderCancelable = (dateString: string) => {
-    const today = new Date().toLocaleDateString('ar-YE');
-    return dateString === today;
+     const orderDate = new Date(dateString);
+     const today = new Date();
+    return orderDate.toDateString() === today.toDateString();
   };
 
-  const handleWhatsAppRedirect = () => {
+  const openWorkerPickerForOrder = () => {
     if (!lastOrder) return;
 
     const message = `*طلب صياغة جديد (رقم #${lastOrder.id.slice(0, 8)})*%0A%0A` +
@@ -302,10 +305,16 @@ export const RequestSection: React.FC<RequestSectionProps> = ({ contact }) => {
       `📝 *ملاحظات:* ${lastOrder.notes || 'لا يوجد'}%0A%0A` +
       `*ملاحظة:* تم إرفاق صورة التصميم في التطبيق.`;
 
-    const url = `https://wa.me/967${contact.manager}?text=${message}`;
-    window.open(url, '_blank');
-  };
+     setPendingWhatsAppMessage(message);
+     setIsWorkerModalOpen(true);
+   };
 
+  const handleWorkerSelect = (workerPhone: string) => {
+    const url = `https://wa.me/967${workerPhone}?text=${pendingWhatsAppMessage}`;
+    window.open(url, '_blank');
+    setIsWorkerModalOpen(false);
+    setPendingWhatsAppMessage('');
+  };
   const resetForm = () => {
     setIsSuccess(false);
     setLastOrder(null);
@@ -325,7 +334,7 @@ export const RequestSection: React.FC<RequestSectionProps> = ({ contact }) => {
         </p>
 
         <button
-          onClick={handleWhatsAppRedirect}
+          onClick={openWorkerPickerForOrder}
           className="w-full py-5 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-lg shadow-lg shadow-green-900/20 flex items-center justify-center gap-3 transition-all duration-300 mb-4"
         >
           <MessageCircle className="w-6 h-6" />
@@ -524,7 +533,13 @@ export const RequestSection: React.FC<RequestSectionProps> = ({ contact }) => {
                     <button
                       onClick={() => {
                         setLastOrder(order);
-                        handleWhatsAppRedirect();
+                        const message = `*طلب صياغة جديد (رقم #${order.id.slice(0, 8)})*%0A%0A` +
+                          `📱 *الهاتف:* ${order.phone}%0A` +
+                          `⚖️ *الوزن المطلوب:* ${order.weight} جرام%0A` +
+                          `📝 *ملاحظات:* ${order.notes || 'لا يوجد'}%0A%0A` +
+                          `*ملاحظة:* تم إرفاق صورة التصميم في التطبيق.`;
+                        setPendingWhatsAppMessage(message);
+                        setIsWorkerModalOpen(true);
                       }}
                       className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-gray-300 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
                     >
@@ -556,4 +571,33 @@ export const RequestSection: React.FC<RequestSectionProps> = ({ contact }) => {
       )}
     </div>
   );
+  {isWorkerModalOpen && (
+    <div className="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm flex items-center justify-center px-4">
+     <div className="w-full max-w-sm bg-[#111] border border-white/10 rounded-2xl p-5">
+       <h4 className="text-gold-300 font-bold mb-4 text-center">اختر العامل للتواصل</h4>
+
+       <div className="space-y-2">
+         {contact.workers.map((workerPhone, idx) => (
+           <button
+             key={idx}
+             onClick={() => handleWorkerSelect(workerPhone)}
+             className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-bold transition"
+           >
+             العامل {idx + 1} - {workerPhone}
+           </button>
+         ))}
+       </div>
+
+       <button
+         onClick={() => {
+           setIsWorkerModalOpen(false);
+           setPendingWhatsAppMessage('');
+         }}
+         className="w-full mt-3 py-2 rounded-xl text-gray-300 hover:text-white"
+       >
+         إلغاء
+       </button>
+     </div>
+   </div>
+ )}
 };

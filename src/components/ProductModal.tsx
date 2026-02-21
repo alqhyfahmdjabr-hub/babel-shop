@@ -1,4 +1,4 @@
-
+import { useState } from 'react';
 import { Product, ContactInfo } from '../types/types';
 import { X, MessageCircle, Scale, Gem, Star } from 'lucide-react';
 
@@ -9,19 +9,27 @@ interface ProductModalProps {
 }
 
 export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, contact }) => {
+  const [isWorkerModalOpen, setIsWorkerModalOpen] = useState(false);
   if (!product) return null;
 
-  const handleWhatsApp = () => {
-    // Improved Luxury Message Format
-    const message = `مرحباً.. استفسار بخصوص قطعة من "مجوهرات بابل":%0A%0A` +
-      `💎 *${product.name}*%0A` +
-      `▫️ العيار: ${product.karat}%0A` +
-      `▫️ الوزن: ${product.weight} جم%0A%0A` +
-      `هل القطعة متوفرة حالياً للعرض أو الحجز؟`;
+  const buildProductMessage = () => {
+    return `مرحبا.. استفسار بخصوص قطعة من "مجوهرات بابل":%0A%0A` +
+     `💎 *${product.name}*%0A` +
+     `▫️ العيار: ${product.karat}%0A` +
+     `▫️ الوزن: ${product.weight} جم%0A%0A` +
+     `هل القطعة متوفرة حالياً للعرض أو الحجز؟`;
+   };
 
-    const url = `https://wa.me/967${contact.manager}?text=${message}`;
+  const handleWorkerSelect = (workerPhone: string) => {
+    const url = `https://wa.me/967${workerPhone}?text=${buildProductMessage()}`;
     window.open(url, '_blank');
+    setIsWorkerModalOpen(false);
   };
+
+  const handleWhatsApp = () => {
+    setIsWorkerModalOpen(true);
+  };
+
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center sm:px-4">
@@ -128,6 +136,37 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
           </div>
         </div>
       </div>
+
+      {/* --- نافذة اختيار العامل الجديدة --- */}
+      {isWorkerModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center px-6 animate-fade-in">
+          <div className="w-full max-w-xs bg-[#0a0a0a] border border-gold-500/20 rounded-[2.5rem] p-6 shadow-2xl relative">
+            <h4 className="text-gold-100 text-center font-serif text-lg mb-6 tracking-widest uppercase">
+              اختر الموظف للتواصل
+            </h4>
+            
+            <div className="space-y-3">
+              {contact.workers.map((workerPhone, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleWorkerSelect(workerPhone)}
+                  className="w-full py-4 rounded-2xl bg-white/[0.03] hover:bg-gold-500/10 border border-white/[0.05] hover:border-gold-500/30 text-gold-100/90 text-sm font-medium transition-all duration-500 flex items-center justify-center gap-2 group"
+                >
+                  <MessageCircle className="w-4 h-4 text-gold-500/50 group-hover:text-gold-500" strokeWidth={1} />
+                  <span>الموظف {idx + 1}</span>
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setIsWorkerModalOpen(false)}
+              className="w-full mt-6 py-2 text-gray-500 hover:text-white text-xs font-light tracking-widest transition-colors duration-500"
+            >
+              إلغاء
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
 import { CONTACT_INFO, QURAN_VERSE, BACKGROUND_LOGO_URL } from './constants';
 import { Product, ViewState, GoldPrice, AppPreferences } from './types/types';
-import { toggleFavorite, getAppPreferences, saveAppPreferences } from './services/storage';
+import { toggleFavorite, getAppPreferences, saveAppPreferences, getFavorites  } from './services/storage';
 import { api } from './services/api';
 import { supabase } from './supabase-client';
 import * as React from 'react'
@@ -53,6 +53,11 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ViewState>('home');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
+  // أمر لجلب المفضلة من ذاكرة الهاتف فور تشغيل التطبيق
+  useEffect(() => {
+    getFavorites().then(setFavorites);
+  }, []);
+
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   // Loading States
@@ -180,7 +185,6 @@ const App: React.FC = () => {
       if (event === 'SIGNED_IN') {
         setIsLoading(true);
         setIsGlobalLoading(false);
-        fetchInitialData();
         success('تم تسجيل الدخول بنجاح');
       }
 
@@ -320,9 +324,10 @@ const App: React.FC = () => {
 
     try {
       // 1. جلب كلمة المرور الصحيحة من قاعدة البيانات
-      const correctPassword = await api.getAdminPassword();
+      // إرسال الرقم الذي أدخله المستخدم للحارس الآمن ليفحصه
+      const isPasswordCorrect = await api.verifyAdminPassword(password);
 
-      if (password === correctPassword || userRole === 'admin') {
+      if (isPasswordCorrect || userRole === 'admin') {
         setIsPasswordModalOpen(false);
         setPassword('');
         if (passwordTarget === 'settings') setIsSettingsOpen(true);
@@ -495,7 +500,7 @@ const App: React.FC = () => {
               className="absolute inset-0 z-20 bg-repeat transition-opacity duration-[2000ms]" 
               style={{ 
                 backgroundImage: `url('${patternUrl}')`, 
-                opacity: bgState.activeIdx === index ? 0.025 : 0, 
+                opacity: bgState.activeIdx === index ? preferences.backgroundOpacity : 0,
                 filter: 'invert(1) contrast(0.7)' 
               }} 
             />

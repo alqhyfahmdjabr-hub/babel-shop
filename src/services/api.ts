@@ -12,24 +12,23 @@ const TABLE_PROFILES = 'profiles';
  * API Service - خدمة الاتصال بقاعدة البيانات
  */
 export const api = {
-  async getAdminPassword(): Promise<string | null> {
+ // --- التحقق الآمن من كلمة مرور المدير عبر قاعدة البيانات ---
+  async verifyAdminPassword(inputPassword: string): Promise<boolean> {
     try {
-      const { data, error } = await supabase
-        .from(TABLE_SETTINGS)
-        .select('value')
-        .eq('key', 'admin_config')
-        .single();
+      // إرسال الرقم الذي كتبه المستخدم إلى الحارس (الدالة) الذي صنعناه في Supabase
+      const { data, error } = await supabase.rpc('verify_admin_password', {
+        input_password: inputPassword
+      });
 
       if (error) {
-        console.error('Error fetching admin password:', error);
-        return null;
+        console.error('Error verifying admin password:', error);
+        return false;
       }
 
-      // بما أن البيانات محفوظة كـ JSONB، نستخرج كلمة المرور بهذا الشكل
-      return data?.value?.password || null;
+      return data === true;
     } catch (err) {
-      console.error('Unexpected error fetching password:', err);
-      return null;
+      console.error('Unexpected error verifying password:', err);
+      return false;
     }
   },
   // --- التحقق من رتبة المستخدم ---
@@ -97,16 +96,13 @@ export const api = {
 
       const { data, error } = await supabase
         .from(TABLE_PRODUCTS)
-        .select('id, name, category, weight, priceEstimate, imageUrl, description, karat, image_url')
+        .select('id, name, category, weight, priceEstimate, imageUrl, description, karat')
         .range(from, to)
         .order('id', { ascending: false });
 
       if (error) throw error;
       
-      return (data || []).map(item => ({
-        ...item,
-        imageUrl: item.imageUrl || item.image_url || ''
-      })) as Product[];
+      return (data || []) as Product[];
     } catch (error) {
       console.error('API Error fetching products:', error);
       return [];
@@ -124,7 +120,6 @@ export const api = {
           weight: product.weight,
           priceEstimate: product.priceEstimate,
           imageUrl: product.imageUrl,
-          image_url: product.imageUrl,
           description: product.description,
           karat: product.karat
         });
@@ -176,15 +171,14 @@ export const api = {
 
   async updatePrices(prices: GoldPrice[]): Promise<void> {
     try {
-      await supabase.from(TABLE_PRICES).delete().neq('karat', 0);
       
       const { error } = await supabase
         .from(TABLE_PRICES)
-        .insert(prices.map(p => ({
+        .upsert(prices.map(p => ({
           karat: p.karat,
           buy: p.buy,
           sell: p.sell
-        })));
+        })),{ onConflict: 'karat' });
         
       if (error) throw error;
     } catch (error) {
@@ -205,7 +199,6 @@ export const api = {
           phone: order.phone,
           weight: order.weight,
           imageUrl: order.imageUrl,
-          image_url: order.imageUrl,
           notes: order.notes,
           date: order.date,
           status: 'new',
@@ -230,7 +223,7 @@ export const api = {
       const role = await this.getUserRole();
 
       let query = supabase.from(TABLE_ORDERS)
-        .select('id, phone, weight, imageUrl, image_url, notes, date, status, user_id, profiles(full_name)');
+        .select('id, phone, weight, imageUrl, notes, date, status, user_id, profiles(full_name)');
 
       if (role !== 'admin') {
         query = query.eq('user_id', user.id);
@@ -240,10 +233,7 @@ export const api = {
 
       if (error) throw error;
       
-      return (data || []).map((item: any) => ({
-        ...item,
-        imageUrl: item.imageUrl || item.image_url || ''
-      })) as ClientRequest[];
+     return (data || []) as ClientRequest[];
     } catch (error) {
       console.error('Error fetching orders:', error);
       return [];
