@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Babel Jewelry</string>
+    <string name="app_name">مجوهرات بابل</string>
     <string name="title_activity_main">Babel Jewelry</string>
     <string name="package_name">com.babeljewelry.app</string>
     <string name="custom_url_scheme">com.babeljewelry.app</string>

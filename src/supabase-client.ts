@@ -1,5 +1,6 @@
 import { Preferences } from '@capacitor/preferences';
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from './types/supabase';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
@@ -18,7 +19,7 @@ const CapacitorStorage = {
 };
 
 // الاتصال المطور (بديل السطر القديم)
-export const supabase = createClient(supabaseUrl, supabaseKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
     auth: {
         storage: CapacitorStorage,
         autoRefreshToken: true,

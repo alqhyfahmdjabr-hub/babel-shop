@@ -20,9 +20,9 @@ const Footer = lazy(() => import('./components/Footer').then(m => ({ default: m.
 const LoginScreen = lazy(() => import('./LoginScreen').then(m => ({ default: m.default })));
 
 import { 
-  Home, Grid, Heart, Search, Settings, Lock, Sparkles, 
+  Home, Grid, Heart, Search, Settings, Sparkles, 
   ClipboardList, ShieldCheck, Award, Gem, Handshake, 
-  BadgeCheck, Crown, RefreshCw, LogIn, X, Loader2, 
+  BadgeCheck, Crown, RefreshCw, X, Loader2, 
   WifiOff, ChevronUp 
 } from 'lucide-react';
 import  { Session } from '@supabase/supabase-js';
@@ -31,6 +31,7 @@ import  { Session } from '@supabase/supabase-js';
 const ITEMS_PER_PAGE = 10;
 const CONNECTION_TIMEOUT = 30000;
 const SCROLL_THRESHOLD = 500;
+type ProtectedAction = 'requests' | 'checkout' | 'admin';
 
 // 🆕 NEW: Loading fallback component
 const ComponentLoader = () => (
@@ -73,6 +74,7 @@ const App: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPrices, setCurrentPrices] = useState<GoldPrice[]>([]);
+  const [liveOunceUsd, setLiveOunceUsd] = useState<number | null>(null);
 
   const [preferences, setPreferences] = useState<AppPreferences>({
     backgroundPattern: 'https://www.transparenttextures.com/patterns/arabesque.png',
@@ -87,11 +89,8 @@ const App: React.FC = () => {
   // Modal States
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [password, setPassword] = useState('');
-  const [isAuthLoading, setIsAuthLoading] = useState(false);
-  const [authError, setAuthError] = useState('');
-  const [passwordTarget, setPasswordTarget] = useState<'settings' | 'admin'>('settings');
+  const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false);
+  const [pendingProtectedAction, setPendingProtectedAction] = useState<ProtectedAction | null>(null);
 
   // 🆕 NEW: Toast notifications
   const { toasts, removeToast, success, error: showError } = useToast();
@@ -111,6 +110,16 @@ const App: React.FC = () => {
     ]);
   }, []);
 
+  const openAuthPrompt = useCallback((action: ProtectedAction | null = null) => {
+    setPendingProtectedAction(action);
+    setIsAuthPromptOpen(true);
+  }, []);
+
+  const closeAuthPrompt = useCallback(() => {
+    setPendingProtectedAction(null);
+    setIsAuthPromptOpen(false);
+  }, []);
+
   // ==========================================
   // 📊 Data Fetching
   // ==========================================
@@ -125,13 +134,15 @@ const App: React.FC = () => {
       });
 
       const minWaitPromise = new Promise(resolve => setTimeout(resolve, 1500));
-      const [fetchedPrices, fetchedProducts] = await Promise.all([
+      const [fetchedPrices, fetchedProducts, fetchedOunceUsd] = await Promise.all([
         fetchWithTimeout(api.getPrices()),
         fetchWithTimeout(api.getProducts(0, ITEMS_PER_PAGE)),
+        fetchWithTimeout(api.getLatestOuncePriceUsd()),
         minWaitPromise
       ]);
 
       setCurrentPrices(fetchedPrices);
+      setLiveOunceUsd(fetchedOunceUsd);
       setProducts(fetchedProducts);
       setPage(1);
       setHasMoreProducts(fetchedProducts.length >= ITEMS_PER_PAGE);
@@ -156,13 +167,10 @@ const App: React.FC = () => {
         .eq('id', userId)
         .single();
 
-      if (data) {
-        setUserRole(data.role);
-      }
+      setUserRole(data?.role ?? 'user');
     } catch (error) {
       console.error('Error fetching role:', error);
-    } finally {
-      setIsGlobalLoading(false);
+      setUserRole('user');
     }
   }, []);
 
@@ -170,44 +178,78 @@ const App: React.FC = () => {
   // 🔐 Auth Effects
   // ==========================================
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        checkUserRole(session.user.id);
-      } else {
-        setIsGlobalLoading(false);
-      }
-    });
+    let isMounted = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      if (!isMounted) return;
 
-      if (event === 'SIGNED_IN') {
-        setIsLoading(true);
-        setIsGlobalLoading(false);
-        success('تم تسجيل الدخول بنجاح');
-      }
-
-      if (session) {
-        if (!userRole) checkUserRole(session.user.id);
+      setSession(currentSession);
+      if (currentSession) {
+        checkUserRole(currentSession.user.id);
       } else {
         setUserRole(null);
-        setIsGlobalLoading(false);
       }
+      setIsGlobalLoading(false);
     });
 
-    return () => subscription.unsubscribe();
-  }, [fetchInitialData, checkUserRole, userRole, success]);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      setSession(nextSession);
+
+      if (nextSession) {
+        checkUserRole(nextSession.user.id);
+        if (event === 'SIGNED_IN') {
+          success('تم تسجيل الدخول بنجاح');
+        }
+      } else {
+        setUserRole(null);
+        setIsAdminOpen(false);
+      }
+
+      setIsGlobalLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [checkUserRole, success]);
 
   useEffect(() => {
-    if (session) {
-      fetchInitialData();
-    }
-  }, [fetchInitialData, session]);
+    fetchInitialData();
+  }, [fetchInitialData]);
 
-  // ==========================================
-  // 📱 Scroll Handler
-  // ==========================================
+  useEffect(() => {
+    if (!session || !pendingProtectedAction) return;
+
+    if (pendingProtectedAction === 'requests') {
+      setActiveTab('requests');
+      closeAuthPrompt();
+      return;
+    }
+
+    if (pendingProtectedAction === 'checkout') {
+      closeAuthPrompt();
+      success('تم تسجيل الدخول، أعد محاولة التواصل');
+      return;
+    }
+
+    if (pendingProtectedAction === 'admin') {
+      if (!userRole) return;
+
+      if (userRole === 'admin') {
+        setIsAdminOpen(true);
+      } else {
+        showError('لا تملك صلاحية الوصول للإدارة');
+      }
+      closeAuthPrompt();
+    }
+  }, [session, pendingProtectedAction, userRole, closeAuthPrompt, success, showError]);
+
+  useEffect(() => {
+    if (!session && activeTab === 'requests') {
+      setActiveTab('home');
+    }
+  }, [session, activeTab]);
   useEffect(() => {
     const handleScroll = () => {
       // Infinite scroll
@@ -305,45 +347,45 @@ const App: React.FC = () => {
   // ==========================================
   // 🔐 Admin Access
   // ==========================================
-  const openPasswordFor = useCallback((target: 'settings' | 'admin') => {
-    if (userRole === 'admin') {
-      if (target === 'settings') setIsSettingsOpen(true);
-      else setIsAdminOpen(true);
+  const handleTabChange = useCallback((tab: ViewState) => {
+    if (tab === 'requests' && !session) {
+      openAuthPrompt('requests');
+      return;
+    }
+    setActiveTab(tab);
+  }, [session, openAuthPrompt]);
+
+  const handleOpenAdmin = useCallback(() => {
+    setIsSettingsOpen(false);
+
+    if (!session) {
+      openAuthPrompt('admin');
       return;
     }
 
-    setPasswordTarget(target);
-    setIsPasswordModalOpen(true);
-    setAuthError('');
-  }, [userRole]);
-
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsAuthLoading(true);
-    setAuthError('');
-
-    try {
-      // 1. جلب كلمة المرور الصحيحة من قاعدة البيانات
-      // إرسال الرقم الذي أدخله المستخدم للحارس الآمن ليفحصه
-      const isPasswordCorrect = await api.verifyAdminPassword(password);
-
-      if (isPasswordCorrect || userRole === 'admin') {
-        setIsPasswordModalOpen(false);
-        setPassword('');
-        if (passwordTarget === 'settings') setIsSettingsOpen(true);
-        else setIsAdminOpen(true);
-      } else {
-        setAuthError('كلمة المرور غير صحيحة أو ليس لديك صلاحية المدير');
-      }
-    } finally {
-      setIsAuthLoading(false);
+    if (userRole === 'admin') {
+      setIsAdminOpen(true);
+      return;
     }
-  };
+
+    showError('لا تملك صلاحية الوصول للإدارة');
+  }, [session, userRole, openAuthPrompt, showError]);
+
+  const handleRequireCheckoutAuth = useCallback(() => {
+    openAuthPrompt('checkout');
+  }, [openAuthPrompt]);
 
   const handleLogout = async () => {
+    if (!session) {
+      showError('لا يوجد حساب مسجل حالياً');
+      return;
+    }
+
     try {
       await supabase.auth.signOut();
       setIsSettingsOpen(false);
+      setIsAdminOpen(false);
+      setActiveTab('home');
       setFavorites([]);
       success('تم تسجيل الخروج بنجاح');
     } catch (error) {
@@ -358,11 +400,13 @@ const App: React.FC = () => {
   const refreshData = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const [updatedPrices, initialProds] = await Promise.all([
+      const [updatedPrices, initialProds, updatedOunceUsd] = await Promise.all([
         fetchWithTimeout(api.getPrices()),
-        fetchWithTimeout(api.getProducts(0, ITEMS_PER_PAGE))
+        fetchWithTimeout(api.getProducts(0, ITEMS_PER_PAGE)),
+        fetchWithTimeout(api.getLatestOuncePriceUsd())
       ]);
       setCurrentPrices(updatedPrices);
+      setLiveOunceUsd(updatedOunceUsd);
       setProducts(initialProds);
       setPage(1);
       setHasMoreProducts(true);
@@ -408,14 +452,6 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-[#020202] flex items-center justify-center">
         <Loader2 className="w-10 h-10 text-gold-500 animate-spin" />
       </div>
-    );
-  }
-
-  if (!session) {
-    return (
-      <Suspense fallback={<ComponentLoader />}>
-        <LoginScreen />
-      </Suspense>
     );
   }
 
@@ -512,7 +548,7 @@ const App: React.FC = () => {
           <header className="relative pt-8 pb-10 px-6 text-center">
             <div className="flex justify-between items-start mb-6">
               <button 
-                onClick={() => openPasswordFor('settings')} 
+                onClick={() => setIsSettingsOpen(true)} 
                 className="p-3 text-gold-600/30 hover:text-gold-400 transition-colors duration-500 rounded-full hover:bg-gold-500/10"
                 aria-label="الإعدادات"
               >
@@ -574,7 +610,7 @@ const App: React.FC = () => {
           <main className="max-w-xl mx-auto px-6 relative z-10 space-y-10 min-h-[500px]">
             {activeTab === 'home' && (
               <Suspense fallback={<ComponentLoader />}>
-                <GoldTicker prices={currentPrices} />
+                <GoldTicker prices={currentPrices} liveOunceUsd={liveOunceUsd} />
                 <div className="grid grid-cols-3 gap-3 animate-fade-in mb-8">
                   {[
                     { icon: Crown, title: 'موديلات حصرية', subtitle: 'ومتجددة' },
@@ -644,7 +680,7 @@ const App: React.FC = () => {
             {/* Products Grid */}
             {activeTab === 'requests' ? (
               <Suspense fallback={<ComponentLoader />}>
-                <RequestSection contact={CONTACT_INFO} />
+                <RequestSection contact={CONTACT_INFO} liveOunceUsd={liveOunceUsd} />
               </Suspense>
             ) : filteredProducts.length > 0 ? (
               <>
@@ -698,7 +734,7 @@ const App: React.FC = () => {
             ].map((item) => (
               <button 
                 key={item.id} 
-                onClick={() => setActiveTab(item.id as ViewState)} 
+                onClick={() => handleTabChange(item.id as ViewState)} 
                 className="flex flex-col items-center justify-center w-16 h-full space-y-1.5 transition-all duration-500 group relative"
               >
                 {activeTab === item.id && (
@@ -758,62 +794,27 @@ const App: React.FC = () => {
             <SettingsModal 
               preferences={preferences} 
               onUpdatePreferences={handleUpdatePreferences} 
-              onOpenAdmin={() => { setIsSettingsOpen(false); setIsAdminOpen(true); }} 
+              onOpenAdmin={handleOpenAdmin} 
               onClose={() => setIsSettingsOpen(false)} 
               onLogout={handleLogout}
             />
           </Suspense>
         )}
 
-        {/* Password Modal */}
-        {isPasswordModalOpen && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center px-6 bg-black/95 backdrop-blur-md animate-fade-in">
-            <div className="bg-[#0F0F0F] border border-white/[0.05] p-10 rounded-[2.5rem] w-full max-w-sm text-center shadow-2xl animate-scale-up relative">
-              <button 
-                onClick={() => { setIsPasswordModalOpen(false); setAuthError(''); setPassword(''); }} 
-                className="absolute top-5 right-5 text-gray-500 hover:text-white transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              
-              <Lock className="w-8 h-8 text-gold-600/60 mx-auto mb-6 opacity-80" strokeWidth={0.5} />
-              <h3 className="text-lg font-serif text-gold-100 mb-2 tracking-wide">تسجيل الدخول</h3>
-              <p className="text-gray-600 text-[10px] mb-8 font-light tracking-wider">لوحة تحكم المشرفين فقط</p>
-              
-              <form onSubmit={handleLoginSubmit} className="space-y-4">
-                <div className="relative">
-                  <Lock className="absolute right-4 top-4 w-5 h-5 text-gray-600" />
-                  <input 
-                    type="password" 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
-                    autoFocus 
-                    required 
-                    placeholder="كلمة المرور" 
-                    className="w-full bg-black/40 border border-gray-800 rounded-xl py-4 pr-12 pl-4 text-white focus:outline-none focus:border-gold-500/50 transition-all font-sans text-sm"
-                  />
-                </div>
-                
-                {authError && (
-                  <div className="text-red-400 text-xs py-2 animate-pulse">{authError}</div>
-                )}
-                
-                <button 
-                  type="submit" 
-                  disabled={isAuthLoading} 
-                  className="w-full bg-gold-600/10 hover:bg-gold-600/20 border border-gold-600/20 text-gold-400 font-bold py-4 rounded-xl transition-all duration-500 font-serif flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {isAuthLoading ? (
-                    <span className="w-5 h-5 border-2 border-gold-500 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <><LogIn className="w-4 h-4" /><span>دخول</span></>
-                  )}
-                </button>
-              </form>
-            </div>
+        {isAuthPromptOpen && (
+          <div className="fixed inset-0 z-[90] animate-fade-in">
+            <button
+              onClick={closeAuthPrompt}
+              className="absolute top-5 right-5 z-[95] p-2 bg-black/60 text-white rounded-full border border-white/20 hover:bg-black/80 transition-colors"
+              aria-label="Close login"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <Suspense fallback={<ComponentLoader />}>
+              <LoginScreen />
+            </Suspense>
           </div>
         )}
-
         {isAdminOpen && (
           <Suspense fallback={<ComponentLoader />}>
             <AdminPanel
@@ -832,6 +833,8 @@ const App: React.FC = () => {
               product={selectedProduct} 
               onClose={() => setSelectedProduct(null)} 
               contact={CONTACT_INFO}
+              isAuthenticated={!!session}
+              onRequireAuth={handleRequireCheckoutAuth}
             />
           </Suspense>
         )}

@@ -1,37 +1,19 @@
-import { supabase } from '../supabase-client';
+﻿import { supabase } from '../supabase-client';
 import { Product, GoldPrice, ClientRequest } from '../types/types';
 import { MOCK_PRICES } from '../constants';
 
-// أسماء الجداول كما هي في قاعدة البيانات
+// ط£ط³ظ…ط§ط، ط§ظ„ط¬ط¯ط§ظˆظ„ ظƒظ…ط§ ظ‡ظٹ ظپظٹ ظ‚ط§ط¹ط¯ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ
 const TABLE_PRODUCTS = 'products';
 const TABLE_ORDERS = 'orders';
 const TABLE_PRICES = 'prices';
 const TABLE_PROFILES = 'profiles';
+const TABLE_PRICE_HISTORY = 'price_history';
 
 /**
- * API Service - خدمة الاتصال بقاعدة البيانات
+ * API Service - ط®ط¯ظ…ط© ط§ظ„ط§طھطµط§ظ„ ط¨ظ‚ط§ط¹ط¯ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ
  */
 export const api = {
- // --- التحقق الآمن من كلمة مرور المدير عبر قاعدة البيانات ---
-  async verifyAdminPassword(inputPassword: string): Promise<boolean> {
-    try {
-      // إرسال الرقم الذي كتبه المستخدم إلى الحارس (الدالة) الذي صنعناه في Supabase
-      const { data, error } = await supabase.rpc('verify_admin_password', {
-        input_password: inputPassword
-      });
-
-      if (error) {
-        console.error('Error verifying admin password:', error);
-        return false;
-      }
-
-      return data === true;
-    } catch (err) {
-      console.error('Unexpected error verifying password:', err);
-      return false;
-    }
-  },
-  // --- التحقق من رتبة المستخدم ---
+  // --- ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ط±طھط¨ط© ط§ظ„ظ…ط³طھط®ط¯ظ… ---
   async getUserRole(): Promise<string | null> {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -58,7 +40,7 @@ export const api = {
     }
   },
 
-  // --- تحديث بيانات الملف الشخصي ---
+  // --- طھط­ط¯ظٹط« ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ظ„ظپ ط§ظ„ط´ط®طµظٹ ---
   async updateProfile(id: string, updates: Partial<{ full_name: string; email: string }>): Promise<void> {
     try {
       const { error } = await supabase
@@ -73,7 +55,7 @@ export const api = {
     }
   },
 
-  // --- تغيير رتبة المستخدم (للمدير فقط) ---
+  // --- طھط؛ظٹظٹط± ط±طھط¨ط© ط§ظ„ظ…ط³طھط®ط¯ظ… (ظ„ظ„ظ…ط¯ظٹط± ظپظ‚ط·) ---
   async adminSetUserRole(targetUserId: string, newRole: 'admin' | 'user'): Promise<void> {
     try {
       const { error } = await supabase.rpc('set_user_role', {
@@ -84,12 +66,12 @@ export const api = {
       if (error) throw error;
     } catch (error) {
       console.error('Security Error changing role:', error);
-      throw new Error('فشل في تغيير الرتبة: قد لا تملك الصلاحية الكافية');
+      throw new Error('ظپط´ظ„ ظپظٹ طھط؛ظٹظٹط± ط§ظ„ط±طھط¨ط©: ظ‚ط¯ ظ„ط§ طھظ…ظ„ظƒ ط§ظ„طµظ„ط§ط­ظٹط© ط§ظ„ظƒط§ظپظٹط©');
     }
   },
 
-  // --- المنتجات ---
-  async getProducts(page: number = 0, limit: number = 1000): Promise<Product[]> {
+  // --- ط§ظ„ظ…ظ†طھط¬ط§طھ ---
+  async getProducts(page: number = 0, limit: number = 20): Promise<Product[]> {
     try {
       const from = page * limit;
       const to = from + limit - 1;
@@ -145,7 +127,7 @@ export const api = {
     }
   },
 
-  // --- الأسعار ---
+  // --- ط§ظ„ط£ط³ط¹ط§ط± ---
   async getPrices(): Promise<GoldPrice[]> {
     try {
       const { data, error } = await supabase
@@ -169,6 +151,28 @@ export const api = {
     }
   },
 
+  async getLatestOuncePriceUsd(): Promise<number | null> {
+    try {
+      const { data, error } = await supabase
+        .from(TABLE_PRICE_HISTORY)
+        .select('source_price_per_oz')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.warn('No ounce history found:', error.message);
+        return null;
+      }
+
+      const ounce = Number(data?.source_price_per_oz);
+      return Number.isFinite(ounce) && ounce > 0 ? ounce : null;
+    } catch (error) {
+      console.error('Error fetching ounce price:', error);
+      return null;
+    }
+  },
+
   async updatePrices(prices: GoldPrice[]): Promise<void> {
     try {
       
@@ -187,11 +191,14 @@ export const api = {
     }
   },
 
-  // --- الطلبات ---
+  // --- ط§ظ„ط·ظ„ط¨ط§طھ ---
   async submitOrder(order: Omit<ClientRequest, 'id'>): Promise<ClientRequest> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('يجب تسجيل الدخول أولاً لإتمام الطلب');
+      if (!user) throw new Error('ظٹط¬ط¨ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ط£ظˆظ„ط§ظ‹ ظ„ط¥طھظ…ط§ظ… ط§ظ„ط·ظ„ط¨');
+      if (!order.imageUrl) {
+        throw new Error('Order image is required');
+      }
 
       const { data, error } = await supabase
         .from(TABLE_ORDERS)
@@ -222,8 +229,9 @@ export const api = {
 
       const role = await this.getUserRole();
 
-      let query = supabase.from(TABLE_ORDERS)
-        .select('id, phone, weight, imageUrl, notes, date, status, user_id, profiles(full_name)');
+      let query = supabase
+        .from(TABLE_ORDERS)
+        .select('id, phone, weight, imageUrl, notes, date, status, user_id');
 
       if (role !== 'admin') {
         query = query.eq('user_id', user.id);
@@ -232,8 +240,36 @@ export const api = {
       const { data, error } = await query.order('date', { ascending: false });
 
       if (error) throw error;
-      
-     return (data || []) as ClientRequest[];
+
+      const orders = (data || []) as ClientRequest[];
+      if (orders.length === 0) return [];
+
+      const userIds = Array.from(
+        new Set(orders.map((order) => order.user_id).filter((id): id is string => Boolean(id)))
+      );
+
+      let profileNameById = new Map<string, string | null>();
+      if (userIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from(TABLE_PROFILES)
+          .select('id, full_name')
+          .in('id', userIds);
+
+        if (profilesError) {
+          console.error('Error fetching profiles for orders:', profilesError);
+        } else {
+          profileNameById = new Map(
+            (profilesData || []).map((profile) => [profile.id, profile.full_name])
+          );
+        }
+      }
+
+      return orders.map((order) => ({
+        ...order,
+        profiles: order.user_id
+          ? { full_name: profileNameById.get(order.user_id) ?? undefined }
+          : undefined
+      }));
     } catch (error) {
       console.error('Error fetching orders:', error);
       return [];

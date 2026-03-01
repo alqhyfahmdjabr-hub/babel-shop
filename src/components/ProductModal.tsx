@@ -6,9 +6,11 @@ interface ProductModalProps {
   product: Product | null;
   onClose: () => void;
   contact: ContactInfo;
+  isAuthenticated: boolean;
+  onRequireAuth: () => void;
 }
 
-export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, contact }) => {
+export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, contact, isAuthenticated, onRequireAuth }) => {
   const [isWorkerModalOpen, setIsWorkerModalOpen] = useState(false);
   if (!product) return null;
 
@@ -27,6 +29,10 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
   };
 
   const handleWhatsApp = () => {
+    if (!isAuthenticated) {
+      onRequireAuth();
+      return;
+    }
     setIsWorkerModalOpen(true);
   };
 

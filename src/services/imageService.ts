@@ -1,4 +1,4 @@
-import { supabase } from '../supabase-client';
+﻿import { supabase } from '../supabase-client';
 import imageCompression from 'browser-image-compression';
 
 export interface UploadResult {
@@ -7,12 +7,12 @@ export interface UploadResult {
 }
 
 /**
- * خدمة إدارة الصور - Image Service
- * تتضمن ضغط الصور، الرفع، والتحقق
+ * ط®ط¯ظ…ط© ط¥ط¯ط§ط±ط© ط§ظ„طµظˆط± - Image Service
+ * طھطھط¶ظ…ظ† ط¶ط؛ط· ط§ظ„طµظˆط±طŒ ط§ظ„ط±ظپط¹طŒ ظˆط§ظ„طھط­ظ‚ظ‚
  */
 export const imageService = {
   /**
-   * ضغط الصورة قبل الرفع
+   * ط¶ط؛ط· ط§ظ„طµظˆط±ط© ظ‚ط¨ظ„ ط§ظ„ط±ظپط¹
    */
   async compressImage(file: File): Promise<File> {
     const options = {
@@ -31,18 +31,18 @@ export const imageService = {
   },
 
   /**
-   * رفع صورة إلى Supabase Storage
+   * ط±ظپط¹ طµظˆط±ط© ط¥ظ„ظ‰ Supabase Storage
    */
   async uploadImage(file: File, folder: string = 'products'): Promise<string> {
     try {
-      // ضغط الصورة أولاً
+      // ط¶ط؛ط· ط§ظ„طµظˆط±ط© ط£ظˆظ„ط§ظ‹
       const compressedFile = await this.compressImage(file);
       
-      // إنشاء اسم فريد للملف
+      // ط¥ظ†ط´ط§ط، ط§ط³ظ… ظپط±ظٹط¯ ظ„ظ„ظ…ظ„ظپ
       const fileExt = compressedFile.name.split('.').pop() || 'jpg';
       const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-      // رفع الصورة
+      // ط±ظپط¹ ط§ظ„طµظˆط±ط©
       const { data, error } = await supabase.storage
         .from('products')
         .upload(fileName, compressedFile, {
@@ -54,7 +54,7 @@ export const imageService = {
         throw new Error(`Upload failed: ${error.message}`);
       }
 
-      // الحصول على الرابط العام
+      // ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ط§ظ„ط±ط§ط¨ط· ط§ظ„ط¹ط§ظ…
       const { data: { publicUrl } } = supabase.storage
         .from('products')
         .getPublicUrl(data.path);
@@ -67,14 +67,48 @@ export const imageService = {
   },
 
   /**
-   * رفع صورة الطلب
+   * ط±ظپط¹ طµظˆط±ط© ط§ظ„ط·ظ„ط¨
    */
   async uploadRequestImage(file: File): Promise<string> {
     return this.uploadImage(file, 'requests');
   },
 
   /**
-   * حذف صورة من Storage
+   * رفع صورة إلهام لتصميم الاستوديو (يرجع الرابط والمسار معاً)
+   */
+  async uploadStudioInspirationImage(file: File): Promise<UploadResult> {
+    try {
+      const compressedFile = await this.compressImage(file);
+      const fileExt = compressedFile.name.split('.').pop() || 'jpg';
+      const path = `studio-inspirations/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from('products')
+        .upload(path, compressedFile, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (error) {
+        throw new Error(`Upload failed: ${error.message}`);
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('products')
+        .getPublicUrl(data.path);
+
+      return {
+        url: publicUrl,
+        path: data.path
+      };
+    } catch (error) {
+      console.error('Error uploading studio inspiration image:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * ط­ط°ظپ طµظˆط±ط© ظ…ظ† Storage
    */
   async deleteImage(path: string): Promise<void> {
     try {
@@ -91,7 +125,7 @@ export const imageService = {
   },
 
   /**
-   * التحقق من حجم الصورة
+   * ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ط­ط¬ظ… ط§ظ„طµظˆط±ط©
    */
   validateImageSize(file: File, maxSizeMB: number = 5): boolean {
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
@@ -99,7 +133,7 @@ export const imageService = {
   },
 
   /**
-   * التحقق من نوع الصورة
+   * ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ظ†ظˆط¹ ط§ظ„طµظˆط±ط©
    */
   validateImageType(file: File): boolean {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
@@ -107,15 +141,15 @@ export const imageService = {
   },
 
   /**
-   * التحقق الكامل من الصورة
+   * ط§ظ„طھط­ظ‚ظ‚ ط§ظ„ظƒط§ظ…ظ„ ظ…ظ† ط§ظ„طµظˆط±ط©
    */
   validateImage(file: File): { valid: boolean; error?: string } {
     if (!this.validateImageType(file)) {
-      return { valid: false, error: 'يجب اختيار ملف صورة (JPEG, PNG, WebP)' };
+      return { valid: false, error: 'ظٹط¬ط¨ ط§ط®طھظٹط§ط± ظ…ظ„ظپ طµظˆط±ط© (JPEG, PNG, WebP)' };
     }
     
     if (!this.validateImageSize(file)) {
-      return { valid: false, error: 'حجم الصورة كبير جداً! الحد الأقصى 5 ميجابايت' };
+      return { valid: false, error: 'ط­ط¬ظ… ط§ظ„طµظˆط±ط© ظƒط¨ظٹط± ط¬ط¯ط§ظ‹! ط§ظ„ط­ط¯ ط§ظ„ط£ظ‚طµظ‰ 5 ظ…ظٹط¬ط§ط¨ط§ظٹطھ' };
     }
     
     return { valid: true };
