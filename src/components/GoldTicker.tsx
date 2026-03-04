@@ -1,58 +1,74 @@
-import { useEffect, useRef, useState } from 'react';
-import { GoldPrice } from '../types/types';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { GoldPrice, PricingSettings } from '../types/types';
 import { ArrowDownLeft, ArrowUpRight, Activity } from 'lucide-react';
+import {
+  calculateKaratBuySellPrices,
+  convertOunceToSar,
+  convertUsdToSar,
+  USD_TO_SAR
+} from '../utils/goldCalculator';
 
 interface GoldTickerProps {
   prices: GoldPrice[];
   liveOunceUsd: number | null;
+  pricingSettings: PricingSettings;
 }
 
-const PriceCard: React.FC<{ price: GoldPrice }> = ({ price }) => {
-  const prevBuy = useRef(price.buy);
-  const prevSell = useRef(price.sell);
-  const lastRealBuyRef = useRef(price.buy);
-  const lastRealSellRef = useRef(price.sell);
+interface DisplayPrice {
+  karat: 18 | 21 | 24;
+  buyUsd: number | null;
+  sellUsd: number | null;
+}
+
+const PriceCard: React.FC<{ price: DisplayPrice; exchangeRate: number }> = ({ price, exchangeRate }) => {
+  const prevBuy = useRef<number | null>(price.buyUsd);
+  const prevSell = useRef<number | null>(price.sellUsd);
+  const lastRealBuyRef = useRef<number | null>(price.buyUsd);
+  const lastRealSellRef = useRef<number | null>(price.sellUsd);
   const lockTimerRef = useRef<number | null>(null);
   const [buyAnim, setBuyAnim] = useState('');
   const [sellAnim, setSellAnim] = useState('');
-  const SAR_MULTIPLIER = 3.8;
-  const buySar = price.buy * SAR_MULTIPLIER;
-  const sellSar = price.sell * SAR_MULTIPLIER;
+  const buySar = price.buyUsd === null ? null : convertUsdToSar(price.buyUsd, exchangeRate);
+  const sellSar = price.sellUsd === null ? null : convertUsdToSar(price.sellUsd, exchangeRate);
   const [displayBuySar, setDisplayBuySar] = useState(buySar);
   const [displaySellSar, setDisplaySellSar] = useState(sellSar);
   const [isLockedToReal, setIsLockedToReal] = useState(false);
 
   useEffect(() => {
-    if (price.buy > prevBuy.current) {
+    if (price.buyUsd === null || prevBuy.current === null) {
+      setBuyAnim('');
+    } else if (price.buyUsd > prevBuy.current) {
       setBuyAnim('animate-flash-green');
-    } else if (price.buy < prevBuy.current) {
+    } else if (price.buyUsd < prevBuy.current) {
       setBuyAnim('animate-flash-red');
     } else {
       setBuyAnim('');
     }
-    prevBuy.current = price.buy;
+    prevBuy.current = price.buyUsd;
 
     const timer = setTimeout(() => setBuyAnim(''), 2000);
     return () => clearTimeout(timer);
-  }, [price.buy]);
+  }, [price.buyUsd]);
 
   useEffect(() => {
-    if (price.sell > prevSell.current) {
+    if (price.sellUsd === null || prevSell.current === null) {
+      setSellAnim('');
+    } else if (price.sellUsd > prevSell.current) {
       setSellAnim('animate-flash-green');
-    } else if (price.sell < prevSell.current) {
+    } else if (price.sellUsd < prevSell.current) {
       setSellAnim('animate-flash-red');
     } else {
       setSellAnim('');
     }
-    prevSell.current = price.sell;
+    prevSell.current = price.sellUsd;
 
     const timer = setTimeout(() => setSellAnim(''), 2000);
     return () => clearTimeout(timer);
-  }, [price.sell]);
+  }, [price.sellUsd]);
 
   useEffect(() => {
     const realChanged =
-      price.buy !== lastRealBuyRef.current || price.sell !== lastRealSellRef.current;
+      price.buyUsd !== lastRealBuyRef.current || price.sellUsd !== lastRealSellRef.current;
 
     setDisplayBuySar(buySar);
     setDisplaySellSar(sellSar);
@@ -65,12 +81,12 @@ const PriceCard: React.FC<{ price: GoldPrice }> = ({ price }) => {
       }, 10000);
     }
 
-    lastRealBuyRef.current = price.buy;
-    lastRealSellRef.current = price.sell;
-  }, [price.buy, price.sell, buySar, sellSar]);
+    lastRealBuyRef.current = price.buyUsd;
+    lastRealSellRef.current = price.sellUsd;
+  }, [price.buyUsd, price.sellUsd, buySar, sellSar]);
 
   useEffect(() => {
-    if (isLockedToReal) return;
+    if (isLockedToReal || buySar === null || sellSar === null) return;
 
     let jitterTimer: number | null = null;
     const scheduleJitter = () => {
@@ -109,7 +125,9 @@ const PriceCard: React.FC<{ price: GoldPrice }> = ({ price }) => {
             <span>شراء</span>
           </div>
           <p className="font-sans text-lg font-medium tracking-wide text-gray-200">
-            {displayBuySar.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س
+            {displayBuySar !== null
+              ? `${displayBuySar.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س`
+              : '--'}
           </p>
         </div>
 
@@ -119,15 +137,15 @@ const PriceCard: React.FC<{ price: GoldPrice }> = ({ price }) => {
             <span>بيع</span>
           </div>
           <p className="bg-gradient-to-r from-[#FFE8A3] via-[#FFDF00] to-[#D4AF37] bg-clip-text text-lg font-bold tracking-wide text-transparent">
-            {displaySellSar.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س
+            {displaySellSar !== null
+              ? `${displaySellSar.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س`
+              : '--'}
           </p>
         </div>
       </div>
     </div>
   );
 };
-
-const USD_TO_SAR = 3.75;
 
 const formatMoney = (value: number, currency: 'USD' | 'SAR') =>
   new Intl.NumberFormat('en-US', {
@@ -139,11 +157,35 @@ const formatMoney = (value: number, currency: 'USD' | 'SAR') =>
 const visualNudge = (base: number, percent = 0.001) =>
   Math.max(0, base + (Math.random() * 2 - 1) * base * percent);
 
-export const GoldTicker: React.FC<GoldTickerProps> = ({ prices, liveOunceUsd }) => {
+export const GoldTicker: React.FC<GoldTickerProps> = ({ prices, liveOunceUsd, pricingSettings }) => {
   const liveUsd = typeof liveOunceUsd === 'number' && Number.isFinite(liveOunceUsd) && liveOunceUsd > 0
     ? liveOunceUsd
     : null;
-  const liveSar = liveUsd ? liveUsd * USD_TO_SAR : null;
+  const exchangeRate =
+    typeof pricingSettings?.exchangeRate === 'number' &&
+    Number.isFinite(pricingSettings.exchangeRate) &&
+    pricingSettings.exchangeRate > 0
+      ? pricingSettings.exchangeRate
+      : USD_TO_SAR;
+  const calcMethod = pricingSettings?.calcMethod === 'from_ounce' ? 'from_ounce' : 'db_prices';
+  const liveSar = convertOunceToSar(liveUsd, exchangeRate);
+  const displayPrices = useMemo<DisplayPrice[]>(() => {
+    if (calcMethod === 'from_ounce') {
+      return calculateKaratBuySellPrices(liveUsd, exchangeRate, 0, 0)
+        .sort((a, b) => b.karat - a.karat)
+        .map((item) => ({
+          karat: item.karat,
+          buyUsd: item.buyUsd,
+          sellUsd: item.sellUsd
+        }));
+    }
+
+    return prices.map((price) => ({
+      karat: price.karat,
+      buyUsd: Number.isFinite(price.buy) ? price.buy : null,
+      sellUsd: Number.isFinite(price.sell) ? price.sell : null
+    }));
+  }, [calcMethod, exchangeRate, liveUsd, prices]);
   const [displayLiveUsd, setDisplayLiveUsd] = useState<number | null>(liveUsd);
   const [displayLiveSar, setDisplayLiveSar] = useState<number | null>(liveSar);
   const [isOunceLockedToReal, setIsOunceLockedToReal] = useState(false);
@@ -239,14 +281,14 @@ export const GoldTicker: React.FC<GoldTickerProps> = ({ prices, liveOunceUsd }) 
               <p className="relative z-10 text-2xl font-bold text-[#F6D574] md:text-3xl">
                 {displayLiveSar !== null ? formatMoney(displayLiveSar, 'SAR') : '--'}
               </p>
-              <p className="relative z-10 mt-2 text-[10px] text-[#8f7d50]">1 USD = 3.75 SAR</p>
+              <p className="relative z-10 mt-2 text-[10px] text-[#8f7d50]">{`1 USD = ${exchangeRate} SAR`}</p>
             </div>
           </div>
         </div>
 
         <div className="grid gap-4 p-5 md:p-6">
-          {prices.map((price) => (
-            <PriceCard key={price.karat} price={price} />
+          {displayPrices.map((price) => (
+            <PriceCard key={price.karat} price={price} exchangeRate={exchangeRate} />
           ))}
         </div>
 

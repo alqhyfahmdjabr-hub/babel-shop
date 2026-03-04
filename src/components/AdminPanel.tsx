@@ -21,7 +21,7 @@ import {
 import { api } from '../services/api';
 import { imageService } from '../services/imageService';
 import { supabase } from '../supabase-client';
-import { ClientRequest, GoldPrice, Product } from '../types/types';
+import { ClientRequest, GoldPrice, PricingSettings, Product } from '../types/types';
 
 interface DesignInspiration {
   id: string;
@@ -40,14 +40,47 @@ interface InspirationFormState {
 interface AdminPanelProps {
   prices: GoldPrice[];
   products: Product[];
+  pricingSettings: PricingSettings;
   onUpdatePrices: () => void;
   onUpdateProducts: () => void;
   onClose: () => void;
 }
 
+const normalizeDigitsToEnglish = (value: string): string =>
+  Array.from(value)
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      if (code >= 0x0660 && code <= 0x0669) return String(code - 0x0660);
+      if (code >= 0x06f0 && code <= 0x06f9) return String(code - 0x06f0);
+      return char;
+    })
+    .join('');
+
+const sanitizeExchangeRateInput = (value: string): string =>
+  value.replace(/[^0-9\u0660-\u0669\u06f0-\u06f9.,\u066b\u066c]/g, '');
+
+const parseExchangeRateInput = (value: string): number | null => {
+  const normalizedDigits = normalizeDigitsToEnglish(value.trim());
+  const withDotSeparator = normalizedDigits.replace(/[\u066b\u066c]/g, '.').replace(/,/g, '.');
+  const cleaned = withDotSeparator.replace(/[^0-9.]/g, '');
+  if (!cleaned) return null;
+
+  const firstDotIndex = cleaned.indexOf('.');
+  const normalizedNumber =
+    firstDotIndex === -1
+      ? cleaned
+      : `${cleaned.slice(0, firstDotIndex + 1)}${cleaned.slice(firstDotIndex + 1).replace(/\./g, '')}`;
+
+  if (!normalizedNumber) return null;
+
+  const parsed = Number.parseFloat(normalizedNumber);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 export const AdminPanel: React.FC<AdminPanelProps> = ({
   prices,
   products,
+  pricingSettings,
   onUpdatePrices,
   onUpdateProducts,
   onClose
@@ -60,6 +93,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [editingPrices, setEditingPrices] = useState<GoldPrice[]>(
     JSON.parse(JSON.stringify(prices))
   );
+  const [editingPricingSettings, setEditingPricingSettings] = useState<PricingSettings>({
+    ...pricingSettings
+  });
+  const [exchangeRateInput, setExchangeRateInput] = useState<string>(
+    String(pricingSettings.exchangeRate ?? '')
+  );
+  const [isSavingPricingSettings, setIsSavingPricingSettings] = useState(false);
   const [showProductForm, setShowProductForm] = useState<Product | null>(null);
   const [orders, setOrders] = useState<ClientRequest[]>([]);
   const [inspirations, setInspirations] = useState<DesignInspiration[]>([]);
@@ -92,6 +132,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (activeTab === 'orders') void fetchOrders();
     if (activeTab === 'inspirations') void fetchInspirations();
   }, [activeTab]);
+
+  useEffect(() => {
+    setEditingPricingSettings({ ...pricingSettings });
+    setExchangeRateInput(String(pricingSettings.exchangeRate ?? ''));
+  }, [pricingSettings]);
 
   const fetchOrders = async () => {
     try {
@@ -137,6 +182,34 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       alert(`فشل حفظ الأسعار: ${error?.message || 'خطأ غير معروف'}`);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSavePricingSettings = async () => {
+    const parsedExchangeRate = parseExchangeRateInput(exchangeRateInput);
+    if (parsedExchangeRate === null || parsedExchangeRate <= 0) {
+      alert('يرجى إدخال سعر صرف صحيح أكبر من صفر');
+      return;
+    }
+    const safeExchangeRate = parsedExchangeRate;
+
+    setIsSavingPricingSettings(true);
+    try {
+      await api.updatePricingSettings({
+        exchangeRate: safeExchangeRate,
+        calcMethod: editingPricingSettings.calcMethod
+      });
+      setEditingPricingSettings((prev) => ({
+        ...prev,
+        exchangeRate: safeExchangeRate
+      }));
+      setExchangeRateInput(String(safeExchangeRate));
+      onUpdatePrices();
+      alert('تم حفظ إعدادات التسعير بنجاح');
+    } catch (error: any) {
+      alert(`فشل حفظ إعدادات التسعير: ${error?.message || 'خطأ غير معروف'}`);
+    } finally {
+      setIsSavingPricingSettings(false);
     }
   };
 
@@ -300,6 +373,44 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       <div className="flex-1 overflow-y-auto p-4">
         {activeTab === 'prices' && (
           <div className="max-w-lg mx-auto space-y-4">
+            <div className="bg-[#0f0f0f] border border-white/10 rounded-xl p-4 space-y-3">
+              <p className="text-gold-300 font-bold">{'\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u062a\u0633\u0639\u064a\u0631 \u0627\u0644\u0630\u0647\u0628'}</p>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">{'\u0633\u0639\u0631 \u0627\u0644\u0635\u0631\u0641 (USD \u0625\u0644\u0649 SAR)'}</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  className="w-full bg-black border border-gray-700 rounded-lg p-2"
+                  value={exchangeRateInput}
+                  onChange={(e) => {
+                    setExchangeRateInput(sanitizeExchangeRateInput(e.target.value));
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">{'\u0637\u0631\u064a\u0642\u0629 \u0627\u0644\u062d\u0633\u0627\u0628'}</label>
+                <select
+                  className="w-full bg-black border border-gray-700 rounded-lg p-2"
+                  value={editingPricingSettings.calcMethod}
+                  onChange={(e) => {
+                    const calcMethod = e.target.value === 'from_ounce' ? 'from_ounce' : 'db_prices';
+                    setEditingPricingSettings((prev) => ({ ...prev, calcMethod }));
+                  }}
+                >
+                  <option value="db_prices">{'\u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u062c\u062f\u0648\u0644 \u0627\u0644\u062b\u0627\u0628\u062a\u0629'}</option>
+                  <option value="from_ounce">{'\u062d\u0633\u0627\u0628 \u0622\u0644\u064a \u0645\u0646 \u0627\u0644\u0623\u0648\u0646\u0635\u0629'}</option>
+                </select>
+              </div>
+              <button
+                onClick={handleSavePricingSettings}
+                disabled={isSavingPricingSettings}
+                className="w-full py-3 rounded-xl bg-gold-600 text-black font-bold"
+              >
+                <Save className="w-4 h-4 inline ml-2" />
+                {isSavingPricingSettings ? '\u062c\u0627\u0631\u064a \u062d\u0641\u0638 \u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a...' : '\u062d\u0641\u0638 \u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u062a\u0633\u0639\u064a\u0631'}
+              </button>
+            </div>
+
             {editingPrices.map((p, i) => (
               <div key={p.karat} className="bg-[#0f0f0f] border border-white/10 rounded-xl p-4">
                 <p className="text-gold-300 font-bold mb-2">عيار {p.karat}</p>

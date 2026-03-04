@@ -16,11 +16,13 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { supabase } from '../supabase-client';
-import { ClientRequest, ContactInfo } from '../types/types';
+import { ClientRequest, ContactInfo, GoldPrice, PricingSettings } from '../types/types';
+import { calculateGramPrice } from '../utils/goldCalculator';
 
 interface RequestSectionProps {
   contact: ContactInfo;
   liveOunceUsd?: number | null;
+  pricingSettings: PricingSettings;
 }
 
 interface DesignInspiration {
@@ -46,7 +48,11 @@ const pieceTypeLabel: Record<'ring' | 'necklace' | 'bracelet' | 'custom', string
   custom: 'مخصص'
 };
 
-export const RequestSection: React.FC<RequestSectionProps> = ({ contact, liveOunceUsd = null }) => {
+export const RequestSection: React.FC<RequestSectionProps> = ({
+  contact,
+  liveOunceUsd = null,
+  pricingSettings
+}) => {
   const [activeView, setActiveView] = useState<'create' | 'track'>('create');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -57,6 +63,7 @@ export const RequestSection: React.FC<RequestSectionProps> = ({ contact, liveOun
   const [processingMessage, setProcessingMessage] = useState('جاري معالجة الصورة...');
 
   const [myOrders, setMyOrders] = useState<ClientRequest[]>([]);
+  const [pricingSourcePrices, setPricingSourcePrices] = useState<GoldPrice[]>([]);
   const [lastOrder, setLastOrder] = useState<ClientRequest | null>(null);
   const [pendingWhatsAppMessage, setPendingWhatsAppMessage] = useState('');
   const [inspirations, setInspirations] = useState<DesignInspiration[]>([]);
@@ -76,9 +83,27 @@ export const RequestSection: React.FC<RequestSectionProps> = ({ contact, liveOun
 
   const parsedWeight = Number.parseFloat(formData.weight);
   const isWeightValid = Number.isFinite(parsedWeight) && parsedWeight > 0;
-  const gram24Usd = liveOunceUsd && liveOunceUsd > 0 ? liveOunceUsd / 31.1034768 : null;
-  const rawGoldEstimateUsd = gram24Usd && isWeightValid
-    ? parsedWeight * gram24Usd * (selectedKarat / 24)
+  const exchangeRate =
+    typeof pricingSettings?.exchangeRate === 'number' &&
+    Number.isFinite(pricingSettings.exchangeRate) &&
+    pricingSettings.exchangeRate > 0
+      ? pricingSettings.exchangeRate
+      : 3.8;
+  const calcMethod = pricingSettings?.calcMethod === 'from_ounce' ? 'from_ounce' : 'db_prices';
+  const ounceDerivedGramUsd = calculateGramPrice(liveOunceUsd, selectedKarat, exchangeRate).usd;
+  const selectedDbPrice = pricingSourcePrices.find((p) => p.karat === selectedKarat) || null;
+  const dbDerivedGramUsd = (() => {
+    if (!selectedDbPrice) return null;
+    const buy = Number(selectedDbPrice.buy);
+    const sell = Number(selectedDbPrice.sell);
+    const validBuy = Number.isFinite(buy) && buy > 0 ? buy : null;
+    const validSell = Number.isFinite(sell) && sell > 0 ? sell : null;
+    if (validBuy !== null && validSell !== null) return (validBuy + validSell) / 2;
+    return validSell ?? validBuy;
+  })();
+  const estimatedGramUsd = calcMethod === 'from_ounce' ? ounceDerivedGramUsd : dbDerivedGramUsd;
+  const rawGoldEstimateUsd = estimatedGramUsd !== null && isWeightValid
+    ? parsedWeight * estimatedGramUsd
     : null;
 
   const selectedInspiration = useMemo(
@@ -94,6 +119,23 @@ export const RequestSection: React.FC<RequestSectionProps> = ({ contact, liveOun
       void fetchInspirations();
     }
   }, [activeView, inspirations.length]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    const loadPricingSource = async () => {
+      if (calcMethod !== 'db_prices') return;
+      try {
+        const rows = await api.getPrices();
+        if (!isCancelled) setPricingSourcePrices(rows);
+      } catch (error) {
+        console.error('Error loading pricing source prices:', error);
+      }
+    };
+    void loadPricingSource();
+    return () => {
+      isCancelled = true;
+    };
+  }, [calcMethod]);
 
   useEffect(() => {
     return () => {

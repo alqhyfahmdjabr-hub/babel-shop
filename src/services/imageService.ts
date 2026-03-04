@@ -7,12 +7,12 @@ export interface UploadResult {
 }
 
 /**
- * ط®ط¯ظ…ط© ط¥ط¯ط§ط±ط© ط§ظ„طµظˆط± - Image Service
- * طھطھط¶ظ…ظ† ط¶ط؛ط· ط§ظ„طµظˆط±طŒ ط§ظ„ط±ظپط¹طŒ ظˆط§ظ„طھط­ظ‚ظ‚
+ * Image management service
+ * Handles compression, upload, and validation
  */
 export const imageService = {
   /**
-   * ط¶ط؛ط· ط§ظ„طµظˆط±ط© ظ‚ط¨ظ„ ط§ظ„ط±ظپط¹
+   * Compress image before upload
    */
   async compressImage(file: File): Promise<File> {
     const options = {
@@ -31,18 +31,18 @@ export const imageService = {
   },
 
   /**
-   * ط±ظپط¹ طµظˆط±ط© ط¥ظ„ظ‰ Supabase Storage
+   * Upload image to Supabase Storage
    */
   async uploadImage(file: File, folder: string = 'products'): Promise<string> {
     try {
-      // ط¶ط؛ط· ط§ظ„طµظˆط±ط© ط£ظˆظ„ط§ظ‹
+      // Compress image first
       const compressedFile = await this.compressImage(file);
       
-      // ط¥ظ†ط´ط§ط، ط§ط³ظ… ظپط±ظٹط¯ ظ„ظ„ظ…ظ„ظپ
+      // Generate unique file name
       const fileExt = compressedFile.name.split('.').pop() || 'jpg';
       const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-      // ط±ظپط¹ ط§ظ„طµظˆط±ط©
+      // Upload image
       const { data, error } = await supabase.storage
         .from('products')
         .upload(fileName, compressedFile, {
@@ -54,7 +54,7 @@ export const imageService = {
         throw new Error(`Upload failed: ${error.message}`);
       }
 
-      // ط§ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ط§ظ„ط±ط§ط¨ط· ط§ظ„ط¹ط§ظ…
+      // Build public URL
       const { data: { publicUrl } } = supabase.storage
         .from('products')
         .getPublicUrl(data.path);
@@ -67,7 +67,7 @@ export const imageService = {
   },
 
   /**
-   * ط±ظپط¹ طµظˆط±ط© ط§ظ„ط·ظ„ط¨
+   * Upload request image
    */
   async uploadRequestImage(file: File): Promise<string> {
     return this.uploadImage(file, 'requests');
@@ -108,7 +108,7 @@ export const imageService = {
   },
 
   /**
-   * ط­ط°ظپ طµظˆط±ط© ظ…ظ† Storage
+   * Delete image from Storage
    */
   async deleteImage(path: string): Promise<void> {
     try {
@@ -125,7 +125,7 @@ export const imageService = {
   },
 
   /**
-   * ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ط­ط¬ظ… ط§ظ„طµظˆط±ط©
+   * Validate image size
    */
   validateImageSize(file: File, maxSizeMB: number = 5): boolean {
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
@@ -133,7 +133,7 @@ export const imageService = {
   },
 
   /**
-   * ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ظ†ظˆط¹ ط§ظ„طµظˆط±ط©
+   * Validate image type
    */
   validateImageType(file: File): boolean {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
@@ -141,15 +141,15 @@ export const imageService = {
   },
 
   /**
-   * ط§ظ„طھط­ظ‚ظ‚ ط§ظ„ظƒط§ظ…ظ„ ظ…ظ† ط§ظ„طµظˆط±ط©
+   * Full image validation
    */
   validateImage(file: File): { valid: boolean; error?: string } {
     if (!this.validateImageType(file)) {
-      return { valid: false, error: 'ظٹط¬ط¨ ط§ط®طھظٹط§ط± ظ…ظ„ظپ طµظˆط±ط© (JPEG, PNG, WebP)' };
+      return { valid: false, error: '\u064a\u062c\u0628 \u0627\u062e\u062a\u064a\u0627\u0631 \u0645\u0644\u0641 \u0635\u0648\u0631\u0629 (JPEG, PNG, WebP)' };
     }
     
     if (!this.validateImageSize(file)) {
-      return { valid: false, error: 'ط­ط¬ظ… ط§ظ„طµظˆط±ط© ظƒط¨ظٹط± ط¬ط¯ط§ظ‹! ط§ظ„ط­ط¯ ط§ظ„ط£ظ‚طµظ‰ 5 ظ…ظٹط¬ط§ط¨ط§ظٹطھ' };
+      return { valid: false, error: '\u062d\u062c\u0645 \u0627\u0644\u0635\u0648\u0631\u0629 \u0643\u0628\u064a\u0631 \u062c\u062f\u0627\u064b! \u0627\u0644\u062d\u062f \u0627\u0644\u0623\u0642\u0635\u0649 5 \u0645\u064a\u062c\u0627\u0628\u0627\u064a\u062a' };
     }
     
     return { valid: true };

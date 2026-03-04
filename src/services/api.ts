@@ -1,19 +1,25 @@
 ﻿import { supabase } from '../supabase-client';
-import { Product, GoldPrice, ClientRequest } from '../types/types';
+import { Product, GoldPrice, ClientRequest, PricingSettings } from '../types/types';
 import { MOCK_PRICES } from '../constants';
 
-// ط£ط³ظ…ط§ط، ط§ظ„ط¬ط¯ط§ظˆظ„ ظƒظ…ط§ ظ‡ظٹ ظپظٹ ظ‚ط§ط¹ط¯ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ
+// Table names as defined in database
 const TABLE_PRODUCTS = 'products';
 const TABLE_ORDERS = 'orders';
 const TABLE_PRICES = 'prices';
 const TABLE_PROFILES = 'profiles';
 const TABLE_PRICE_HISTORY = 'price_history';
+const TABLE_APP_SETTINGS = 'app_settings';
+
+type AppSettingsRow = {
+  exchange_rate: number;
+  calc_method: 'db_prices' | 'from_ounce';
+};
 
 /**
- * API Service - ط®ط¯ظ…ط© ط§ظ„ط§طھطµط§ظ„ ط¨ظ‚ط§ط¹ط¯ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ
+ * API Service - database communication layer
  */
 export const api = {
-  // --- ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ط±طھط¨ط© ط§ظ„ظ…ط³طھط®ط¯ظ… ---
+  // --- user role checks ---
   async getUserRole(): Promise<string | null> {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -40,7 +46,7 @@ export const api = {
     }
   },
 
-  // --- طھط­ط¯ظٹط« ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ظ„ظپ ط§ظ„ط´ط®طµظٹ ---
+  // --- profile updates ---
   async updateProfile(id: string, updates: Partial<{ full_name: string; email: string }>): Promise<void> {
     try {
       const { error } = await supabase
@@ -55,7 +61,7 @@ export const api = {
     }
   },
 
-  // --- طھط؛ظٹظٹط± ط±طھط¨ط© ط§ظ„ظ…ط³طھط®ط¯ظ… (ظ„ظ„ظ…ط¯ظٹط± ظپظ‚ط·) ---
+  // --- role changes (admin only) ---
   async adminSetUserRole(targetUserId: string, newRole: 'admin' | 'user'): Promise<void> {
     try {
       const { error } = await supabase.rpc('set_user_role', {
@@ -66,11 +72,11 @@ export const api = {
       if (error) throw error;
     } catch (error) {
       console.error('Security Error changing role:', error);
-      throw new Error('ظپط´ظ„ ظپظٹ طھط؛ظٹظٹط± ط§ظ„ط±طھط¨ط©: ظ‚ط¯ ظ„ط§ طھظ…ظ„ظƒ ط§ظ„طµظ„ط§ط­ظٹط© ط§ظ„ظƒط§ظپظٹط©');
+      throw new Error('\u0641\u0634\u0644 \u0641\u064a \u062a\u063a\u064a\u064a\u0631 \u0627\u0644\u0631\u062a\u0628\u0629: \u0642\u062f \u0644\u0627 \u062a\u0645\u0644\u0643 \u0627\u0644\u0635\u0644\u0627\u062d\u064a\u0629 \u0627\u0644\u0643\u0627\u0641\u064a\u0629');
     }
   },
 
-  // --- ط§ظ„ظ…ظ†طھط¬ط§طھ ---
+  // --- products ---
   async getProducts(page: number = 0, limit: number = 20): Promise<Product[]> {
     try {
       const from = page * limit;
@@ -127,7 +133,7 @@ export const api = {
     }
   },
 
-  // --- ط§ظ„ط£ط³ط¹ط§ط± ---
+  // --- prices ---
   async getPrices(): Promise<GoldPrice[]> {
     try {
       const { data, error } = await supabase
@@ -148,6 +154,55 @@ export const api = {
     } catch (error) {
       console.error('Error fetching prices:', error);
       return MOCK_PRICES;
+    }
+  },
+
+  async getPricingSettings(): Promise<PricingSettings | null> {
+    try {
+      const { data, error } = await (supabase as any)
+        .from(TABLE_APP_SETTINGS)
+        .select('exchange_rate, calc_method')
+        .eq('id', 1)
+        .maybeSingle();
+
+      if (error || !data) {
+        console.warn('No pricing settings found:', error?.message || 'empty');
+        return null;
+      }
+
+      const settingsRow = data as AppSettingsRow;
+      const exchangeRate = Number(settingsRow.exchange_rate);
+      const calcMethod = settingsRow.calc_method === 'from_ounce' ? 'from_ounce' : 'db_prices';
+
+      if (!Number.isFinite(exchangeRate) || exchangeRate <= 0) {
+        return null;
+      }
+
+      return {
+        exchangeRate,
+        calcMethod
+      };
+    } catch (error) {
+      console.error('Error fetching pricing settings:', error);
+      return null;
+    }
+  },
+
+  async updatePricingSettings(settings: PricingSettings): Promise<void> {
+    try {
+      const { error } = await (supabase as any)
+        .from(TABLE_APP_SETTINGS)
+        .upsert({
+          id: 1,
+          exchange_rate: settings.exchangeRate,
+          calc_method: settings.calcMethod,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving pricing settings:', error);
+      throw error;
     }
   },
 
@@ -191,11 +246,11 @@ export const api = {
     }
   },
 
-  // --- ط§ظ„ط·ظ„ط¨ط§طھ ---
+  // --- orders ---
   async submitOrder(order: Omit<ClientRequest, 'id'>): Promise<ClientRequest> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('ظٹط¬ط¨ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„ ط£ظˆظ„ط§ظ‹ ظ„ط¥طھظ…ط§ظ… ط§ظ„ط·ظ„ط¨');
+      if (!user) throw new Error('\u064a\u062c\u0628 \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644 \u0623\u0648\u0644\u0627\u064b \u0644\u0625\u062a\u0645\u0627\u0645 \u0627\u0644\u0637\u0644\u0628');
       if (!order.imageUrl) {
         throw new Error('Order image is required');
       }

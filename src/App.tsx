@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
 import { CONTACT_INFO, QURAN_VERSE, BACKGROUND_LOGO_URL } from './constants';
-import { Product, ViewState, GoldPrice, AppPreferences } from './types/types';
+import { Product, ViewState, GoldPrice, AppPreferences, PricingSettings } from './types/types';
 import { toggleFavorite, getAppPreferences, saveAppPreferences, getFavorites  } from './services/storage';
 import { api } from './services/api';
 import { supabase } from './supabase-client';
@@ -32,6 +32,10 @@ const ITEMS_PER_PAGE = 10;
 const CONNECTION_TIMEOUT = 30000;
 const SCROLL_THRESHOLD = 500;
 type ProtectedAction = 'requests' | 'checkout' | 'admin';
+const DEFAULT_PRICING_SETTINGS: PricingSettings = {
+  exchangeRate: 3.8,
+  calcMethod: 'db_prices'
+};
 
 // 🆕 NEW: Loading fallback component
 const ComponentLoader = () => (
@@ -75,6 +79,7 @@ const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPrices, setCurrentPrices] = useState<GoldPrice[]>([]);
   const [liveOunceUsd, setLiveOunceUsd] = useState<number | null>(null);
+  const [pricingSettings, setPricingSettings] = useState<PricingSettings>(DEFAULT_PRICING_SETTINGS);
 
   const [preferences, setPreferences] = useState<AppPreferences>({
     backgroundPattern: 'https://www.transparenttextures.com/patterns/arabesque.png',
@@ -134,15 +139,17 @@ const App: React.FC = () => {
       });
 
       const minWaitPromise = new Promise(resolve => setTimeout(resolve, 1500));
-      const [fetchedPrices, fetchedProducts, fetchedOunceUsd] = await Promise.all([
+      const [fetchedPrices, fetchedProducts, fetchedOunceUsd, fetchedPricingSettings] = await Promise.all([
         fetchWithTimeout(api.getPrices()),
         fetchWithTimeout(api.getProducts(0, ITEMS_PER_PAGE)),
         fetchWithTimeout(api.getLatestOuncePriceUsd()),
+        fetchWithTimeout(api.getPricingSettings()),
         minWaitPromise
       ]);
 
       setCurrentPrices(fetchedPrices);
       setLiveOunceUsd(fetchedOunceUsd);
+      setPricingSettings(fetchedPricingSettings ?? DEFAULT_PRICING_SETTINGS);
       setProducts(fetchedProducts);
       setPage(1);
       setHasMoreProducts(fetchedProducts.length >= ITEMS_PER_PAGE);
@@ -400,13 +407,15 @@ const App: React.FC = () => {
   const refreshData = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const [updatedPrices, initialProds, updatedOunceUsd] = await Promise.all([
+      const [updatedPrices, initialProds, updatedOunceUsd, updatedPricingSettings] = await Promise.all([
         fetchWithTimeout(api.getPrices()),
         fetchWithTimeout(api.getProducts(0, ITEMS_PER_PAGE)),
-        fetchWithTimeout(api.getLatestOuncePriceUsd())
+        fetchWithTimeout(api.getLatestOuncePriceUsd()),
+        fetchWithTimeout(api.getPricingSettings())
       ]);
       setCurrentPrices(updatedPrices);
       setLiveOunceUsd(updatedOunceUsd);
+      setPricingSettings(updatedPricingSettings ?? DEFAULT_PRICING_SETTINGS);
       setProducts(initialProds);
       setPage(1);
       setHasMoreProducts(true);
@@ -610,7 +619,7 @@ const App: React.FC = () => {
           <main className="max-w-xl mx-auto px-6 relative z-10 space-y-10 min-h-[500px]">
             {activeTab === 'home' && (
               <Suspense fallback={<ComponentLoader />}>
-                <GoldTicker prices={currentPrices} liveOunceUsd={liveOunceUsd} />
+                <GoldTicker prices={currentPrices} liveOunceUsd={liveOunceUsd} pricingSettings={pricingSettings} />
                 <div className="grid grid-cols-3 gap-3 animate-fade-in mb-8">
                   {[
                     { icon: Crown, title: 'موديلات حصرية', subtitle: 'ومتجددة' },
@@ -680,7 +689,7 @@ const App: React.FC = () => {
             {/* Products Grid */}
             {activeTab === 'requests' ? (
               <Suspense fallback={<ComponentLoader />}>
-                <RequestSection contact={CONTACT_INFO} liveOunceUsd={liveOunceUsd} />
+                <RequestSection contact={CONTACT_INFO} liveOunceUsd={liveOunceUsd} pricingSettings={pricingSettings} />
               </Suspense>
             ) : filteredProducts.length > 0 ? (
               <>
@@ -820,6 +829,7 @@ const App: React.FC = () => {
             <AdminPanel
               prices={currentPrices}
               products={products}
+              pricingSettings={pricingSettings}
               onUpdatePrices={() => refreshData()}
               onUpdateProducts={() => refreshData()}
               onClose={() => setIsAdminOpen(false)}

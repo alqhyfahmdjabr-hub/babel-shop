@@ -1,0 +1,18 @@
+﻿schemaname|tablename|policyname|roles|cmd|coalesce|coalesce
+public|orders|orders_delete_own_or_admin|{authenticated}|DELETE|((user_id = ( SELECT auth.uid() AS uid)) OR (( SELECT (auth.jwt() ->> 'user_role'::text)) = 'admin'::text))|
+public|orders|orders_delete_user|{authenticated}|DELETE|((( SELECT auth.uid() AS uid) IS NOT NULL) AND (( SELECT is_admin(( SELECT auth.uid() AS uid)) AS is_admin) OR (( SELECT auth.uid() AS uid) = user_id)))|
+public|orders|orders_insert_own_or_admin|{authenticated}|INSERT||((user_id = ( SELECT auth.uid() AS uid)) OR (( SELECT (auth.jwt() ->> 'user_role'::text)) = 'admin'::text))
+public|orders|orders_insert_user|{authenticated}|INSERT||((( SELECT auth.uid() AS uid) IS NOT NULL) AND (( SELECT auth.uid() AS uid) = user_id))
+public|orders|orders_select_own_or_admin|{authenticated}|SELECT|((user_id = ( SELECT auth.uid() AS uid)) OR (( SELECT (auth.jwt() ->> 'user_role'::text)) = 'admin'::text))|
+public|orders|orders_select_user|{authenticated}|SELECT|((( SELECT auth.uid() AS uid) IS NOT NULL) AND (( SELECT is_admin(( SELECT auth.uid() AS uid)) AS is_admin) OR (( SELECT auth.uid() AS uid) = user_id)))|
+public|orders|orders_update_own_or_admin|{authenticated}|UPDATE|((user_id = ( SELECT auth.uid() AS uid)) OR (( SELECT (auth.jwt() ->> 'user_role'::text)) = 'admin'::text))|((user_id = ( SELECT auth.uid() AS uid)) OR (( SELECT (auth.jwt() ->> 'user_role'::text)) = 'admin'::text))
+public|orders|orders_update_user|{authenticated}|UPDATE|((( SELECT auth.uid() AS uid) IS NOT NULL) AND (( SELECT is_admin(( SELECT auth.uid() AS uid)) AS is_admin) OR (( SELECT auth.uid() AS uid) = user_id)))|((( SELECT auth.uid() AS uid) IS NOT NULL) AND (( SELECT is_admin(( SELECT auth.uid() AS uid)) AS is_admin) OR (( SELECT auth.uid() AS uid) = user_id)))
+public|profiles|profiles_delete_admin_only|{authenticated}|DELETE|(( SELECT (auth.jwt() ->> 'user_role'::text)) = 'admin'::text)|
+public|profiles|profiles_insert_own_or_admin|{authenticated}|INSERT||((id = ( SELECT auth.uid() AS uid)) OR (( SELECT (auth.jwt() ->> 'user_role'::text)) = 'admin'::text))
+public|profiles|profiles_select_own_or_admin|{authenticated}|SELECT|((id = ( SELECT auth.uid() AS uid)) OR (( SELECT (auth.jwt() ->> 'user_role'::text)) = 'admin'::text))|
+public|profiles|profiles_update_own_or_admin|{authenticated}|UPDATE|((id = ( SELECT auth.uid() AS uid)) OR (( SELECT (auth.jwt() ->> 'user_role'::text)) = 'admin'::text))|((id = ( SELECT auth.uid() AS uid)) OR (( SELECT (auth.jwt() ->> 'user_role'::text)) = 'admin'::text))
+public|settings|settings_delete_admin_only|{authenticated}|DELETE|(( SELECT (auth.jwt() ->> 'user_role'::text)) = 'admin'::text)|
+public|settings|settings_insert_key_or_admin|{authenticated}|INSERT||((key IS NOT NULL) AND ((key ~~ 'public.%'::text) OR (( SELECT (auth.jwt() ->> 'user_role'::text)) = 'admin'::text)))
+public|settings|settings_select_publickey_or_admin|{authenticated}|SELECT|((key ~~ 'public.%'::text) OR (( SELECT (auth.jwt() ->> 'user_role'::text)) = 'admin'::text))|
+public|settings|settings_update_key_or_admin|{authenticated}|UPDATE|((key ~~ 'public.%'::text) OR (( SELECT (auth.jwt() ->> 'user_role'::text)) = 'admin'::text))|((key IS NOT NULL) AND ((key ~~ 'public.%'::text) OR (( SELECT (auth.jwt() ->> 'user_role'::text)) = 'admin'::text)))
+(16 rows)
