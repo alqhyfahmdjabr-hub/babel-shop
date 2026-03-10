@@ -8,7 +8,7 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ contact }) => {
   return (
-    <footer className="bg-neutral-900 border-t border-gold-900/30 pt-10 pb-24 px-4 text-center">
+    <footer className="app-surface border-t pt-10 pb-24 px-4 text-center">
 
       <div className="max-w-md mx-auto mb-8">
         <h3 className="gold-text-gradient font-serif text-2xl font-bold mb-6">اتصل بنا</h3>

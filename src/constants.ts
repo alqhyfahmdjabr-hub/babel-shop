@@ -1,4 +1,4 @@
-import { ContactInfo, Product, GoldPrice, Pattern } from './types/types';
+import { ContactInfo, Product, GoldPrice } from './types/types';
 
 export const APP_NAME = "مجوهرات بابل";
 export const APP_VERSION = "1.0.0";
@@ -6,7 +6,7 @@ export const APP_VERSION = "1.0.0";
 export const BACKGROUND_LOGO_URL = "https://i.postimg.cc/25Knz1yL/babl3.png";
 
 // Patterns for background
-export const PATTERNS: Pattern[] = [
+export const PATTERNS = [
   { id: 'arabesque', name: 'زخرفة عربية', url: 'https://www.transparenttextures.com/patterns/arabesque.png' },
   { id: 'scales', name: 'حراشف التنين', url: 'https://www.transparenttextures.com/patterns/black-scales.png' },
   { id: 'diamond', name: 'تنجيد فاخر', url: 'https://www.transparenttextures.com/patterns/black-thread.png' },

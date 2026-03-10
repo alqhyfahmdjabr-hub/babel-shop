@@ -290,6 +290,66 @@ export interface Database {
           }
         ];
       };
+      app_settings: {
+        Row: {
+          id: number;
+          exchange_rate: number | null;
+          calc_method: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: number;
+          exchange_rate?: number | null;
+          calc_method?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: number;
+          exchange_rate?: number | null;
+          calc_method?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      design_inspirations: {
+        Row: {
+          id: string;
+          title: string;
+          piece_type: string;
+          image_url: string;
+          storage_path: string;
+          sort_order: number | null;
+          is_active: boolean | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          piece_type: string;
+          image_url: string;
+          storage_path: string;
+          sort_order?: number | null;
+          is_active?: boolean | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          piece_type?: string;
+          image_url?: string;
+          storage_path?: string;
+          sort_order?: number | null;
+          is_active?: boolean | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       settings: {
         Row: {
           key: string;
@@ -312,7 +372,7 @@ export interface Database {
         Relationships: [];
       };
     };
-    Views: {};
+    Views: Record<string, never>;
     Functions: {
       current_auth_uid: {
         Args: Record<PropertyKey, never>;
@@ -331,7 +391,7 @@ export interface Database {
         Returns: boolean;
       };
     };
-    Enums: {};
-    CompositeTypes: {};
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }

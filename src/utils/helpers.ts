@@ -48,28 +48,28 @@ export const truncateText = (text: string, maxLength: number): string => {
 /**
  * تأخير التنفيذ (Debounce)
  */
-export const debounce = <T extends (...args: any[]) => any>(
+export const debounce = <T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): ((...args: Parameters<T>) => void) => {
-  let timeout: NodeJS.Timeout;
+  let timeout: ReturnType<typeof setTimeout>;
   return (...args: Parameters<T>) => {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
+    timeout = setTimeout(() => void func(...args), wait);
   };
 };
 
 /**
  * تقييد معدل التنفيذ (Throttle)
  */
-export const throttle = <T extends (...args: any[]) => any>(
+export const throttle = <T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number
 ): ((...args: Parameters<T>) => void) => {
   let inThrottle: boolean;
   return (...args: Parameters<T>) => {
     if (!inThrottle) {
-      func(...args);
+      void func(...args);
       inThrottle = true;
       setTimeout(() => (inThrottle = false), limit);
     }

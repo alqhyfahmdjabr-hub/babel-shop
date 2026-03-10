@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense, lazy, useMemo, type ChangeEvent, type FC } from 'react';
 import { CONTACT_INFO, QURAN_VERSE, BACKGROUND_LOGO_URL } from './constants';
 import { Product, ViewState, GoldPrice, AppPreferences, PricingSettings } from './types/types';
 import { toggleFavorite, getAppPreferences, saveAppPreferences, getFavorites  } from './services/storage';
 import { api } from './services/api';
 import { supabase } from './supabase-client';
-import * as React from 'react'
 // 🆕 NEW: Toast and Error Boundary imports
-import { useToast, ToastContainer } from './components/Toast';
+import { ToastContainer } from './components/Toast';
+import { useToast } from './hooks/useToast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 // 🆕 NEW: Lazy load components for better performance
@@ -25,7 +25,7 @@ import {
   BadgeCheck, Crown, RefreshCw, X, Loader2, 
   WifiOff, ChevronUp 
 } from 'lucide-react';
-import  { Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 
 // --- Performance Constants ---
 const ITEMS_PER_PAGE = 10;
@@ -44,7 +44,7 @@ const ComponentLoader = () => (
   </div>
 );
 
-const App: React.FC = () => {
+const App: FC = () => {
   // ==========================================
   // 🔒 Security & Auth States
   // ==========================================
@@ -81,15 +81,12 @@ const App: React.FC = () => {
   const [liveOunceUsd, setLiveOunceUsd] = useState<number | null>(null);
   const [pricingSettings, setPricingSettings] = useState<PricingSettings>(DEFAULT_PRICING_SETTINGS);
 
-  const [preferences, setPreferences] = useState<AppPreferences>({
-    backgroundPattern: 'https://www.transparenttextures.com/patterns/arabesque.png',
-    backgroundOpacity: 0.03
-  });
+  const [preferences, setPreferences] = useState<AppPreferences>({ theme: 'dark' });
 
-  const [bgState, setBgState] = useState({
-    layers: [preferences.backgroundPattern, preferences.backgroundPattern],
-    activeIdx: 0
-  });
+  useEffect(() => {
+    document.documentElement.dataset.theme = preferences.theme;
+    document.body.dataset.theme = preferences.theme;
+  }, [preferences.theme]);
 
   // Modal States
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -133,10 +130,6 @@ const App: React.FC = () => {
       setLoadingError('');
       const loadedPrefs = await getAppPreferences();
       setPreferences(loadedPrefs);
-      setBgState({
-        layers: [loadedPrefs.backgroundPattern, loadedPrefs.backgroundPattern],
-        activeIdx: 0
-      });
 
       const minWaitPromise = new Promise(resolve => setTimeout(resolve, 1500));
       const [fetchedPrices, fetchedProducts, fetchedOunceUsd, fetchedPricingSettings] = await Promise.all([
@@ -257,6 +250,28 @@ const App: React.FC = () => {
       setActiveTab('home');
     }
   }, [session, activeTab]);
+
+  const loadMoreProducts = useCallback(async () => {
+    if (isLoadingMore) return;
+    
+    setIsLoadingMore(true);
+    try {
+      const newProducts = await api.getProducts(page, ITEMS_PER_PAGE);
+      if (newProducts.length === 0) {
+        setHasMoreProducts(false);
+      } else {
+        setProducts(prev => [...prev, ...newProducts]);
+        setPage(prev => prev + 1);
+        setHasMoreProducts(newProducts.length >= ITEMS_PER_PAGE);
+      }
+    } catch (error) {
+      console.error('Error loading more products', error);
+      showError('فشل تحميل المزيد من المنتجات');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, page, showError]);
+
   useEffect(() => {
     const handleScroll = () => {
       // Infinite scroll
@@ -277,51 +292,11 @@ const App: React.FC = () => {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isLoadingMore, hasMoreProducts, searchTerm, activeTab]);
-
-  const loadMoreProducts = async () => {
-    if (isLoadingMore) return;
-    
-    setIsLoadingMore(true);
-    try {
-      const newProducts = await api.getProducts(page, ITEMS_PER_PAGE);
-      if (newProducts.length === 0) {
-        setHasMoreProducts(false);
-      } else {
-        setProducts(prev => [...prev, ...newProducts]);
-        setPage(prev => prev + 1);
-        setHasMoreProducts(newProducts.length >= ITEMS_PER_PAGE);
-      }
-    } catch (error) {
-      console.error('Error loading more products', error);
-      showError('فشل تحميل المزيد من المنتجات');
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
+  }, [isLoadingMore, hasMoreProducts, searchTerm, activeTab, loadMoreProducts]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  // ==========================================
-  // 🎨 Background Effect
-  // ==========================================
-  useEffect(() => {
-    const currentActivePattern = bgState.layers[bgState.activeIdx];
-    if (preferences.backgroundPattern !== currentActivePattern) {
-      const img = new Image();
-      img.src = preferences.backgroundPattern;
-      img.onload = () => {
-        setBgState(prev => {
-          const nextIdx = prev.activeIdx === 0 ? 1 : 0;
-          const newLayers = [...prev.layers];
-          newLayers[nextIdx] = preferences.backgroundPattern;
-          return { layers: newLayers, activeIdx: nextIdx };
-        });
-      };
-    }
-  }, [preferences.backgroundPattern, bgState.layers, bgState.activeIdx]);
 
   // ==========================================
   // ❤️ Favorites Handler
@@ -431,7 +406,7 @@ const App: React.FC = () => {
   // ==========================================
   // 🔍 Search Handler
   // ==========================================
-  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearch = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   }, []);
 
@@ -443,7 +418,7 @@ const App: React.FC = () => {
   // ==========================================
   // 📋 Filtered Products
   // ==========================================
-  const filteredProducts = React.useMemo(() => {
+  const filteredProducts = useMemo(() => {
     return products.filter(p => {
       const matchesSearch = 
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -458,7 +433,7 @@ const App: React.FC = () => {
   // ==========================================
   if (isGlobalLoading) {
     return (
-      <div className="min-h-screen bg-[#020202] flex items-center justify-center">
+      <div data-theme={preferences.theme} className="app-shell min-h-screen flex items-center justify-center">
         <Loader2 className="w-10 h-10 text-gold-500 animate-spin" />
       </div>
     );
@@ -466,9 +441,15 @@ const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#020202] flex flex-col items-center justify-center relative overflow-hidden z-50">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] opacity-[0.03]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gold-900/20 via-[#020202] to-[#020202]" />
+      <div
+        data-theme={preferences.theme}
+        className="app-shell min-h-screen flex flex-col items-center justify-center relative overflow-hidden z-50"
+      >
+        <div className="bg-noise" />
+        <div className="absolute inset-0 z-0 pointer-events-none app-bg-gradient" />
+        <div
+          className="absolute inset-0 z-0 pointer-events-none app-watermark"
+        />
         
         <div className="relative z-10 flex flex-col items-center justify-center w-full px-4">
           <div className="relative mb-12 group">
@@ -482,11 +463,11 @@ const App: React.FC = () => {
             </div>
           </div>
           
-          <h1 className="text-6xl md:text-7xl font-serif tracking-wide mb-3 opacity-0 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+          <h1 className="text-6xl md:text-7xl font-serif tracking-wide mb-3 opacity-0 animate-slide-up anim-delay-300">
             <span className="bg-clip-text text-transparent bg-gradient-to-b from-[#FFF5D6] via-[#F4D03F] to-[#B7950B]">بابل</span>
           </h1>
           
-          <div className="flex items-center gap-3 opacity-0 animate-slide-up" style={{ animationDelay: '0.6s' }}>
+          <div className="flex items-center gap-3 opacity-0 animate-slide-up anim-delay-600">
             <span className="h-[1px] w-8 bg-gradient-to-r from-transparent to-gold-500/50" />
             <p className="text-gold-400/80 font-serif text-sm tracking-[0.4em] uppercase">Luxury Jewelry</p>
             <span className="h-[1px] w-8 bg-gradient-to-l from-transparent to-gold-500/50" />
@@ -520,36 +501,19 @@ const App: React.FC = () => {
   // ==========================================
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-[#020202] font-sans pb-32 selection:bg-gold-900/30 selection:text-gold-100 relative overflow-hidden animate-fade-in text-gray-200">
+      <div
+        data-theme={preferences.theme}
+        className="app-shell min-h-screen font-sans pb-32 selection:bg-gold-900/30 selection:text-gold-100 relative overflow-hidden animate-fade-in"
+      >
         {/* 🆕 NEW: Toast Notifications */}
         <ToastContainer toasts={toasts} onRemove={removeToast} />
         
         {/* Background Effects */}
         <div className="bg-noise" />
         <div className="fixed inset-0 z-0 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#020202] via-[#080808] to-[#050505]" />
-          <div 
-            className="absolute inset-0 z-0 opacity-[0.05]" 
-            style={{ 
-              backgroundImage: `url('${BACKGROUND_LOGO_URL}')`, 
-              backgroundPosition: 'center 40%', 
-              backgroundRepeat: 'no-repeat', 
-              backgroundSize: '100vw', 
-              filter: 'grayscale(100%) blur(0.5px)' 
-            }} 
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/50 z-10" />
-          {bgState.layers.map((patternUrl, index) => (
-            <div 
-              key={index} 
-              className="absolute inset-0 z-20 bg-repeat transition-opacity duration-[2000ms]" 
-              style={{ 
-                backgroundImage: `url('${patternUrl}')`, 
-                opacity: bgState.activeIdx === index ? preferences.backgroundOpacity : 0,
-                filter: 'invert(1) contrast(0.7)' 
-              }} 
-            />
-          ))}
+          <div className="absolute inset-0 bg-[var(--bg-color)]" />
+          <div className="absolute inset-0 app-bg-gradient" />
+          <div className="absolute inset-0 z-0 app-watermark" />
         </div>
 
         <div className="relative z-10">
@@ -560,6 +524,7 @@ const App: React.FC = () => {
                 onClick={() => setIsSettingsOpen(true)} 
                 className="p-3 text-gold-600/30 hover:text-gold-400 transition-colors duration-500 rounded-full hover:bg-gold-500/10"
                 aria-label="الإعدادات"
+                title="الإعدادات"
               >
                 <Settings className="w-5 h-5" strokeWidth={1} />
               </button>
@@ -586,7 +551,7 @@ const App: React.FC = () => {
                 <span className="text-gold-200 font-light">للمجوهرات الملكية</span>
                 <span className="w-8 h-[1px] bg-gradient-to-l from-transparent to-gold-500/50" />
               </div>
-              <div className="mt-6 flex flex-wrap justify-center gap-3 animate-slide-up" style={{ animationDelay: '0.15s' }}>
+              <div className="mt-6 flex flex-wrap justify-center gap-3 animate-slide-up anim-delay-150">
                 {[
                   { icon: ShieldCheck, text: 'ضمان العيار' },
                   { icon: Gem, text: 'أصالة و جودة' },
@@ -603,7 +568,7 @@ const App: React.FC = () => {
               </div>
             </div>
             
-            <div className="mt-8 animate-slide-up relative px-4" style={{ animationDelay: '0.3s' }}>
+            <div className="mt-8 animate-slide-up relative px-4 anim-delay-300">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3">
                 <Sparkles className="w-4 h-4 text-gold-600/30" />
               </div>
@@ -655,8 +620,11 @@ const App: React.FC = () => {
                 <Search className="absolute right-6 top-5 w-5 h-5 text-gray-500 group-hover:text-gold-400 transition-colors duration-500 z-10" />
                 {searchTerm && (
                   <button
+                    type="button"
                     onClick={clearSearch}
                     className="absolute left-4 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-gold-400 transition-colors"
+                    aria-label="مسح البحث"
+                    title="مسح البحث"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -733,7 +701,7 @@ const App: React.FC = () => {
         </div>
 
         {/* Bottom Navigation */}
-        <nav className="fixed bottom-6 left-6 right-6 h-20 bg-[#080808]/80 backdrop-blur-xl border border-white/10 rounded-full z-40 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] max-w-md mx-auto">
+        <nav className="fixed bottom-6 left-6 right-6 h-20 themed-panel backdrop-blur-xl border rounded-full z-40 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] max-w-md mx-auto">
           <div className="flex justify-around items-center h-full px-2">
             {[
               { id: 'home', icon: Home, label: 'الرئيسية' },
@@ -769,8 +737,8 @@ const App: React.FC = () => {
         </nav>
 
         {/* Status Bar */}
-        <div className="fixed bottom-0 left-0 right-0 h-6 bg-[#020202] border-t border-white/10 flex items-center justify-between px-6 z-30">
-          <div className="flex items-center gap-2 text-[9px] text-gray-500">
+        <div className="fixed bottom-0 left-0 right-0 h-6 app-surface border-t flex items-center justify-between px-6 z-30">
+          <div className="flex items-center gap-2 text-[9px] text-[var(--text-muted)]">
             <span className={`w-1.5 h-1.5 rounded-full ${isLoading || isRefreshing ? 'bg-yellow-500 animate-pulse' : 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]'}`} />
             <span className="font-sans font-medium tracking-wide">
               {activeTab === 'home' ? 'الرئيسية' : activeTab === 'catalog' ? 'المعرض العام' : activeTab === 'requests' ? 'قسم الطلبات الخاصة' : 'المفضلة'}
@@ -792,6 +760,7 @@ const App: React.FC = () => {
             onClick={scrollToTop}
             className="fixed bottom-28 right-6 w-10 h-10 bg-gold-600/20 backdrop-blur-sm border border-gold-500/30 rounded-full flex items-center justify-center text-gold-400 hover:bg-gold-600/30 transition-all z-30 animate-fade-in"
             aria-label="العودة للأعلى"
+            title="العودة للأعلى"
           >
             <ChevronUp className="w-5 h-5" />
           </button>
@@ -816,6 +785,7 @@ const App: React.FC = () => {
               onClick={closeAuthPrompt}
               className="absolute top-5 right-5 z-[95] p-2 bg-black/60 text-white rounded-full border border-white/20 hover:bg-black/80 transition-colors"
               aria-label="Close login"
+              title="Close login"
             >
               <X className="w-5 h-5" />
             </button>

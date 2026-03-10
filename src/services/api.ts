@@ -159,7 +159,7 @@ export const api = {
 
   async getPricingSettings(): Promise<PricingSettings | null> {
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from(TABLE_APP_SETTINGS)
         .select('exchange_rate, calc_method')
         .eq('id', 1)
@@ -190,7 +190,7 @@ export const api = {
 
   async updatePricingSettings(settings: PricingSettings): Promise<void> {
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from(TABLE_APP_SETTINGS)
         .upsert({
           id: 1,

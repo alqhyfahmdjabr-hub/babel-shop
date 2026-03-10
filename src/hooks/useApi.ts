@@ -7,7 +7,7 @@ interface UseApiOptions<T> {
   retryDelay?: number;
 }
 
-interface UseApiReturn<T, P extends any[]> {
+interface UseApiReturn<T, P extends unknown[]> {
   data: T | null;
   loading: boolean;
   error: Error | null;
@@ -19,7 +19,7 @@ interface UseApiReturn<T, P extends any[]> {
 /**
  * Hook for API calls with loading, error states and retry logic
  */
-export function useApi<T, P extends any[] = any[]>(
+export function useApi<T, P extends unknown[] = unknown[]>(
   apiFunction: (...params: P) => Promise<T>,
   options: UseApiOptions<T> = {}
 ): UseApiReturn<T, P> {
@@ -107,7 +107,7 @@ export function useApi<T, P extends any[] = any[]>(
 /**
  * Hook for debounced API calls
  */
-export function useDebouncedApi<T, P extends any[] = any[]>(
+export function useDebouncedApi<T, P extends unknown[] = unknown[]>(
   apiFunction: (...params: P) => Promise<T>,
   delay: number = 500,
   options: UseApiOptions<T> = {}

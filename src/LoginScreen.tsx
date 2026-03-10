@@ -150,8 +150,8 @@ export default function LoginScreen() {
 
         setFailedAttempts(0);
       }
-    } catch (err: any) {
-      const msg = String(err?.message || '');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
 
       if (msg.includes('User already registered')) {
         setError('هذا البريد مسجل مسبقاً. انتقل إلى تسجيل الدخول.');
@@ -195,8 +195,8 @@ export default function LoginScreen() {
       setFailedAttempts(0);
       setOtpCode('');
       setMessage('تم تفعيل الحساب بنجاح. يمكنك تسجيل الدخول الآن.');
-    } catch (err: any) {
-      const msg = String(err?.message || '');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
       if (/token|otp|expired|invalid/i.test(msg)) {
         setError('رمز التحقق غير صحيح أو منتهي الصلاحية. اطلب رمزاً جديداً.');
       } else {
@@ -224,8 +224,9 @@ export default function LoginScreen() {
 
       setMessage('تم إرسال رمز تحقق جديد إلى بريدك الإلكتروني.');
       setResendCooldown(60);
-    } catch (err: any) {
-      setError(err?.message || 'تعذر إعادة إرسال رمز التحقق.');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      setError(msg || 'تعذر إعادة إرسال رمز التحقق.');
     } finally {
       setOtpLoading(false);
     }
@@ -265,10 +266,11 @@ export default function LoginScreen() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 mr-1">البريد الإلكتروني</label>
+                <label className="text-xs font-bold text-gray-500 mr-1" htmlFor="otp-email">البريد الإلكتروني</label>
                 <div className="relative">
                   <Mail className="absolute right-3 top-3.5 h-5 w-5 text-gray-400" />
                   <input
+                    id="otp-email"
                     type="email"
                     className="w-full pr-10 pl-3 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-700"
                     value={otpEmail}
@@ -278,8 +280,9 @@ export default function LoginScreen() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 mr-1">رمز التحقق (6 أرقام)</label>
+                <label className="text-xs font-bold text-gray-500 mr-1" htmlFor="otp-code">رمز التحقق (6 أرقام)</label>
                 <input
+                  id="otp-code"
                   type="text"
                   inputMode="numeric"
                   pattern="\d{6}"

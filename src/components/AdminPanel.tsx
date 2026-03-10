@@ -150,7 +150,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const fetchInspirations = async () => {
     setIsLoadingInspirations(true);
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('design_inspirations')
         .select('id, title, piece_type, image_url, storage_path')
         .order('sort_order', { ascending: true })
@@ -178,8 +178,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       await api.updatePrices(editingPrices);
       onUpdatePrices();
       alert('تم حفظ الأسعار بنجاح');
-    } catch (error: any) {
-      alert(`فشل حفظ الأسعار: ${error?.message || 'خطأ غير معروف'}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'خطأ غير معروف';
+      alert(`فشل حفظ الأسعار: ${message}`);
     } finally {
       setIsSaving(false);
     }
@@ -206,8 +207,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setExchangeRateInput(String(safeExchangeRate));
       onUpdatePrices();
       alert('تم حفظ إعدادات التسعير بنجاح');
-    } catch (error: any) {
-      alert(`فشل حفظ إعدادات التسعير: ${error?.message || 'خطأ غير معروف'}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'خطأ غير معروف';
+      alert(`فشل حفظ إعدادات التسعير: ${message}`);
     } finally {
       setIsSavingPricingSettings(false);
     }
@@ -298,7 +300,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setIsSaving(true);
     try {
       const uploaded = await imageService.uploadStudioInspirationImage(inspirationForm.imageFile);
-      const { error } = await (supabase as any).from('design_inspirations').insert({
+      const { error } = await supabase.from('design_inspirations').insert({
         title: inspirationForm.title.trim(),
         piece_type: inspirationForm.piece_type,
         image_url: uploaded.url,
@@ -322,7 +324,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (!confirm('هل تريد حذف صورة الإلهام؟')) return;
     setIsSaving(true);
     try {
-      const { error } = await (supabase as any).from('design_inspirations').delete().eq('id', item.id);
+      const { error } = await supabase.from('design_inspirations').delete().eq('id', item.id);
       if (error) throw error;
       await imageService.deleteImage(item.storage_path);
       await fetchInspirations();
@@ -359,7 +361,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         <h2 className="text-gold-400 font-bold text-xl">لوحة الإدارة</h2>
         <div className="flex items-center gap-2">
           <button onClick={handleLogout} className="px-3 py-1.5 rounded-lg bg-red-900/20 text-red-400 text-xs flex items-center gap-1"><LogOut className="w-3 h-3" />خروج</button>
-          <button onClick={onClose} className="p-2 text-gray-400"><X className="w-5 h-5" /></button>
+          <button type="button" onClick={onClose} className="p-2 text-gray-400" aria-label="إغلاق" title="إغلاق"><X className="w-5 h-5" /></button>
         </div>
       </div>
 
@@ -376,8 +378,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <div className="bg-[#0f0f0f] border border-white/10 rounded-xl p-4 space-y-3">
               <p className="text-gold-300 font-bold">{'\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u062a\u0633\u0639\u064a\u0631 \u0627\u0644\u0630\u0647\u0628'}</p>
               <div>
-                <label className="block text-xs text-gray-400 mb-1">{'\u0633\u0639\u0631 \u0627\u0644\u0635\u0631\u0641 (USD \u0625\u0644\u0649 SAR)'}</label>
+                <label className="block text-xs text-gray-400 mb-1" htmlFor="admin-exchange-rate">{'\u0633\u0639\u0631 \u0627\u0644\u0635\u0631\u0641 (USD \u0625\u0644\u0649 SAR)'}</label>
                 <input
+                  id="admin-exchange-rate"
                   type="text"
                   inputMode="decimal"
                   className="w-full bg-black border border-gray-700 rounded-lg p-2"
@@ -388,8 +391,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-400 mb-1">{'\u0637\u0631\u064a\u0642\u0629 \u0627\u0644\u062d\u0633\u0627\u0628'}</label>
+                <label className="block text-xs text-gray-400 mb-1" htmlFor="admin-calc-method">{'\u0637\u0631\u064a\u0642\u0629 \u0627\u0644\u062d\u0633\u0627\u0628'}</label>
                 <select
+                  id="admin-calc-method"
+                  title="طريقة الحساب"
+                  aria-label="طريقة الحساب"
                   className="w-full bg-black border border-gray-700 rounded-lg p-2"
                   value={editingPricingSettings.calcMethod}
                   onChange={(e) => {
@@ -415,8 +421,30 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <div key={p.karat} className="bg-[#0f0f0f] border border-white/10 rounded-xl p-4">
                 <p className="text-gold-300 font-bold mb-2">عيار {p.karat}</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <input type="number" className="bg-black border border-gray-700 rounded-lg p-2" value={p.buy} onChange={(e) => { const next = [...editingPrices]; next[i] = { ...next[i], buy: Number(e.target.value) || 0 }; setEditingPrices(next); }} />
-                  <input type="number" className="bg-black border border-gray-700 rounded-lg p-2" value={p.sell} onChange={(e) => { const next = [...editingPrices]; next[i] = { ...next[i], sell: Number(e.target.value) || 0 }; setEditingPrices(next); }} />
+                  <input
+                    type="number"
+                    className="bg-black border border-gray-700 rounded-lg p-2"
+                    value={p.buy}
+                    aria-label={`سعر الشراء لعيار ${p.karat}`}
+                    title={`سعر الشراء لعيار ${p.karat}`}
+                    onChange={(e) => {
+                      const next = [...editingPrices];
+                      next[i] = { ...next[i], buy: Number(e.target.value) || 0 };
+                      setEditingPrices(next);
+                    }}
+                  />
+                  <input
+                    type="number"
+                    className="bg-black border border-gray-700 rounded-lg p-2"
+                    value={p.sell}
+                    aria-label={`سعر البيع لعيار ${p.karat}`}
+                    title={`سعر البيع لعيار ${p.karat}`}
+                    onChange={(e) => {
+                      const next = [...editingPrices];
+                      next[i] = { ...next[i], sell: Number(e.target.value) || 0 };
+                      setEditingPrices(next);
+                    }}
+                  />
                 </div>
               </div>
             ))}
@@ -434,8 +462,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <p className="font-bold">{product.name}</p>
                   <p className="text-xs text-gray-400">{product.weight} جرام - عيار {product.karat}</p>
                 </div>
-                <button onClick={() => setShowProductForm(product)} className="p-2 text-blue-400"><Edit2 className="w-4 h-4" /></button>
-                <button onClick={() => void handleDeleteProduct(product.id)} className="p-2 text-red-400"><Trash2 className="w-4 h-4" /></button>
+                <button type="button" onClick={() => setShowProductForm(product)} className="p-2 text-blue-400" aria-label="تعديل المنتج" title="تعديل المنتج"><Edit2 className="w-4 h-4" /></button>
+                <button type="button" onClick={() => void handleDeleteProduct(product.id)} className="p-2 text-red-400" aria-label="حذف المنتج" title="حذف المنتج"><Trash2 className="w-4 h-4" /></button>
               </div>
             ))}
           </div>
@@ -454,7 +482,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     <p className="text-xs text-gray-400 flex items-center gap-1"><Ruler className="w-3 h-3" />{order.weight} جرام</p>
                     <p className="text-xs text-gray-500 flex items-center gap-1"><Calendar className="w-3 h-3" />{order.date}</p>
                   </div>
-                  <button onClick={() => void handleDeleteOrder(order.id)} className="p-2 text-red-400"><Trash2 className="w-4 h-4" /></button>
+                  <button type="button" onClick={() => void handleDeleteOrder(order.id)} className="p-2 text-red-400" aria-label="حذف الطلب" title="حذف الطلب"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </div>
             ))}
@@ -465,10 +493,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           <div className="max-w-lg mx-auto space-y-4">
             <form onSubmit={handleUploadInspiration} className="bg-[#0f0f0f] border border-white/10 rounded-xl p-4 space-y-3">
               <input className="w-full bg-black border border-gray-700 rounded-lg p-2" placeholder="عنوان صورة الإلهام" value={inspirationForm.title} onChange={(e) => setInspirationForm((prev) => ({ ...prev, title: e.target.value }))} />
-              <select className="w-full bg-black border border-gray-700 rounded-lg p-2" value={inspirationForm.piece_type} onChange={(e) => setInspirationForm((prev) => ({ ...prev, piece_type: e.target.value as InspirationFormState['piece_type'] }))}>
+              <select className="w-full bg-black border border-gray-700 rounded-lg p-2" title="نوع القطعة" aria-label="نوع القطعة" value={inspirationForm.piece_type} onChange={(e) => setInspirationForm((prev) => ({ ...prev, piece_type: e.target.value as InspirationFormState['piece_type'] }))}>
                 <option value="general">عام</option><option value="ring">خاتم</option><option value="necklace">عقد</option><option value="bracelet">سوار</option><option value="earring">أقراط</option>
               </select>
-              <input ref={inspirationImageInputRef} type="file" accept="image/*" className="hidden" onChange={handleInspirationImage} />
+              <input
+                id="admin-inspiration-image"
+                ref={inspirationImageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                aria-label="صورة الإلهام"
+                title="صورة الإلهام"
+                onChange={handleInspirationImage}
+              />
               <button type="button" onClick={() => inspirationImageInputRef.current?.click()} className="w-full py-2 rounded-lg border border-dashed border-gray-700"><Upload className="w-4 h-4 inline ml-1" />اختيار صورة</button>
               {inspirationForm.imageFile && <p className="text-xs text-gray-400">{inspirationForm.imageFile.name}</p>}
               <button type="submit" disabled={isSaving} className="w-full py-2 rounded-lg bg-gold-600 text-black font-bold">رفع صورة إلهام</button>
@@ -484,7 +521,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     <p className="font-bold">{item.title}</p>
                     <p className="text-xs text-gray-500">النوع: {item.piece_type}</p>
                   </div>
-                  <button onClick={() => void handleDeleteInspiration(item)} className="p-2 text-red-400"><Trash2 className="w-4 h-4" /></button>
+                  <button type="button" onClick={() => void handleDeleteInspiration(item)} className="p-2 text-red-400" aria-label="حذف الإلهام" title="حذف الإلهام"><Trash2 className="w-4 h-4" /></button>
                 </div>
               ))
             )}
@@ -496,20 +533,29 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         <div className="fixed inset-0 z-[80] bg-black/95 flex flex-col">
           <div className="p-4 border-b border-white/10 flex items-center justify-between">
             <h3 className="font-bold text-lg">{showProductForm.id ? 'تعديل منتج' : 'إضافة منتج'}</h3>
-            <button onClick={() => setShowProductForm(null)} className="p-2 text-gray-400"><X className="w-5 h-5" /></button>
+            <button type="button" onClick={() => setShowProductForm(null)} className="p-2 text-gray-400" aria-label="إغلاق" title="إغلاق"><X className="w-5 h-5" /></button>
           </div>
           <form onSubmit={handleSaveProduct} className="p-4 overflow-y-auto flex-1 space-y-3 max-w-lg mx-auto w-full">
-            <input ref={productImageInputRef} type="file" accept="image/*" className="hidden" onChange={handleProductImage} />
+            <input
+              id="admin-product-image"
+              ref={productImageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              aria-label="صورة المنتج"
+              title="صورة المنتج"
+              onChange={handleProductImage}
+            />
             <button type="button" onClick={() => productImageInputRef.current?.click()} className="w-full py-3 rounded-xl border border-dashed border-gray-700">
               <Upload className="w-4 h-4 inline ml-1" />اختيار صورة المنتج
             </button>
             {showProductForm.imageUrl && <img src={showProductForm.imageUrl} alt="preview" className="w-full h-48 object-cover rounded-xl" />}
             <input className="w-full bg-black border border-gray-700 rounded-lg p-3" value={showProductForm.name} onChange={(e) => setShowProductForm({ ...showProductForm, name: e.target.value })} placeholder="اسم المنتج" required />
             <input type="number" step="0.01" className="w-full bg-black border border-gray-700 rounded-lg p-3" value={showProductForm.weight || ''} onChange={(e) => setShowProductForm({ ...showProductForm, weight: Number(e.target.value) || 0 })} placeholder="الوزن" required />
-            <select className="w-full bg-black border border-gray-700 rounded-lg p-3" value={showProductForm.karat} onChange={(e) => setShowProductForm({ ...showProductForm, karat: Number(e.target.value) as 18 | 21 | 24 })}>
+            <select className="w-full bg-black border border-gray-700 rounded-lg p-3" title="العيار" aria-label="العيار" value={showProductForm.karat} onChange={(e) => setShowProductForm({ ...showProductForm, karat: Number(e.target.value) as 18 | 21 | 24 })}>
               <option value={18}>18</option><option value={21}>21</option><option value={24}>24</option>
             </select>
-            <select className="w-full bg-black border border-gray-700 rounded-lg p-3" value={showProductForm.category} onChange={(e) => setShowProductForm({ ...showProductForm, category: e.target.value })}>
+            <select className="w-full bg-black border border-gray-700 rounded-lg p-3" title="الفئة" aria-label="الفئة" value={showProductForm.category} onChange={(e) => setShowProductForm({ ...showProductForm, category: e.target.value })}>
               <option value="ring">خاتم</option><option value="set">طقم</option><option value="necklace">عقد</option><option value="bracelet">سوار</option><option value="earring">أقراط</option>
             </select>
             <textarea rows={3} className="w-full bg-black border border-gray-700 rounded-lg p-3" value={showProductForm.description} onChange={(e) => setShowProductForm({ ...showProductForm, description: e.target.value })} placeholder="وصف المنتج" />

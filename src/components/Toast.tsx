@@ -1,14 +1,6 @@
 import { useEffect, useState } from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
-
-export type ToastType = 'success' | 'error' | 'warning' | 'info';
-
-export interface Toast {
-  id: string;
-  message: string;
-  type: ToastType;
-  duration?: number;
-}
+import type { Toast } from '../types/types';
 
 interface ToastItemProps {
   toast: Toast;
@@ -61,6 +53,8 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
       <button
         onClick={handleRemove}
         className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+        aria-label="إغلاق"
+        title="إغلاق"
       >
         <X className="w-4 h-4" />
       </button>
@@ -85,49 +79,6 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove
       </div>
     </div>
   );
-};
-
-// Hook for using toast
-import { useCallback } from 'react';
-
-export const useToast = () => {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-
-  const addToast = useCallback((message: string, type: ToastType = 'info', duration?: number) => {
-    const id = Math.random().toString(36).substring(7);
-    setToasts(prev => [...prev, { id, message, type, duration }]);
-    return id;
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
-
-  const success = useCallback((message: string, duration?: number) => {
-    return addToast(message, 'success', duration);
-  }, [addToast]);
-
-  const error = useCallback((message: string, duration?: number) => {
-    return addToast(message, 'error', duration);
-  }, [addToast]);
-
-  const warning = useCallback((message: string, duration?: number) => {
-    return addToast(message, 'warning', duration);
-  }, [addToast]);
-
-  const info = useCallback((message: string, duration?: number) => {
-    return addToast(message, 'info', duration);
-  }, [addToast]);
-
-  return {
-    toasts,
-    addToast,
-    removeToast,
-    success,
-    error,
-    warning,
-    info
-  };
 };
 
 export default ToastContainer;

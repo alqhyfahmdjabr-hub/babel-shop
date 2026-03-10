@@ -1,6 +1,4 @@
-import { useState, useEffect } from 'react';
-import { PATTERNS } from '../constants';
-import { X, Lock, Paintbrush, Sliders, LogOut } from 'lucide-react';
+import { X, Lock, Sliders, LogOut, SunMedium, MoonStar } from 'lucide-react';
 import { AppPreferences } from '../types/types';
 
 
@@ -19,26 +17,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   onLogout
 }) => {
-  const [localOpacity, setLocalOpacity] = useState(preferences.backgroundOpacity);
+  const isLight = preferences.theme === 'light';
 
-  // ✅ تحديث القيمة المحلية عند تغير الـ props
-  useEffect(() => {
-    setLocalOpacity(preferences.backgroundOpacity);
-  }, [preferences.backgroundOpacity]);
-
-  const handlePatternSelect = (url: string) => {
-    const newPrefs = { ...preferences, backgroundPattern: url };
-    onUpdatePreferences(newPrefs);
-  };
-
-  const handleOpacityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    setLocalOpacity(val);
-  };
-
-  const handleOpacityCommit = () => {
-    const newPrefs = { ...preferences, backgroundOpacity: localOpacity };
-    onUpdatePreferences(newPrefs);
+  const handleThemeToggle = () => {
+    onUpdatePreferences({
+      ...preferences,
+      theme: isLight ? 'dark' : 'light'
+    });
   };
 
   return (
@@ -47,72 +32,50 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-fade-in" onClick={onClose}></div>
 
       {/* Modal Content */}
-      <div className="relative bg-[#0F0F0F] border border-gold-600/30 w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl animate-scale-up">
+      <div className="relative app-surface border border-gold-600/30 w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl animate-scale-up">
 
         {/* Header */}
-        <div className="bg-neutral-900/80 p-6 border-b border-gray-800/50 flex justify-between items-center">
+        <div className="app-surface p-6 border-b flex justify-between items-center">
           <h2 className="text-xl font-serif font-bold text-gold-500 flex items-center gap-2">
             <Sliders className="w-5 h-5" />
             تفضيلات العرض
           </h2>
-          <button onClick={onClose} className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors"
+            aria-label="إغلاق"
+            title="إغلاق"
+          >
             <X className="w-5 h-5 text-gray-300" />
           </button>
         </div>
 
         <div className="p-6 space-y-8 overflow-y-auto max-h-[75vh]">
 
-          {/* Background Selection Section */}
+          {/* Theme Section */}
           <section>
-            <h3 className="text-gray-400 text-[10px] mb-4 tracking-widest uppercase flex items-center gap-2 font-bold">
-              <Paintbrush className="w-4 h-4 text-gold-600" />
-              نمط النقش والخلفية
+            <h3 className="settings-section-title">
+              {isLight ? (
+                <SunMedium className="w-4 h-4 text-[var(--gold-accent)]" />
+              ) : (
+                <MoonStar className="w-4 h-4 text-[var(--gold-accent)]" />
+              )}
+              المظهر
             </h3>
 
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              {PATTERNS.map((pattern) => (
-                <button
-                  key={pattern.id}
-                  onClick={() => handlePatternSelect(pattern.url)}
-                  className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-500 group ${preferences.backgroundPattern === pattern.url ? 'border-gold-500 scale-105 shadow-[0_0_20px_rgba(212,175,55,0.2)]' : 'border-gray-800 hover:border-gray-600'}`}
-                >
-                  <div className="absolute inset-0 bg-neutral-900"></div>
-                  <div
-                    className="absolute inset-0 opacity-40"
-                    style={{ backgroundImage: `url(${pattern.url})`, backgroundSize: 'cover' }}
-                  ></div>
-
-                  {preferences.backgroundPattern === pattern.url && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gold-500/10 backdrop-blur-[1px]">
-                      <div className="w-2 h-2 bg-gold-500 rounded-full shadow-[0_0_10px_#D4AF37]"></div>
-                    </div>
-                  )}
-
-                  <span className="absolute bottom-0 inset-x-0 bg-black/80 text-[8px] text-gold-200/70 py-1 text-center truncate px-1 font-sans">
-                    {pattern.name}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* Opacity Slider */}
-            <div className="bg-black/40 p-5 rounded-2xl border border-white/5 shadow-inner">
-              <div className="flex justify-between text-[10px] text-gray-500 mb-3 font-bold tracking-wider">
-                <span>وضوح النقش</span>
-                <span className="text-gold-500/80">{Math.round(localOpacity * 100)}%</span>
+            <button onClick={handleThemeToggle} className="theme-toggle-card" type="button">
+              <div className="text-right">
+                <span className="block text-[10px] text-[var(--text-muted)]">الوضع الحالي</span>
+                <span className="block text-sm font-bold text-[var(--text-color)]">
+                  {isLight ? 'الوضع الفاتح' : 'الوضع الداكن'}
+                </span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="0.3"
-                step="0.01"
-                value={localOpacity}
-                onChange={handleOpacityChange}
-                onMouseUp={handleOpacityCommit}
-                onTouchEnd={handleOpacityCommit}
-                className="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-gold-600"
-              />
-            </div>
+
+              <div className={`theme-switch ${isLight ? 'is-light' : ''}`}>
+                <span className="theme-switch-thumb" />
+              </div>
+            </button>
           </section>
 
           {/* Admin Access Section */}

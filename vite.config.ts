@@ -1,9 +1,9 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type PluginOption } from 'vite';
 import react from '@vitejs/plugin-react';
 import  visualizerModule from 'vite-bundle-visualizer';
 import { resolve } from 'path';
 
-const visualizer = (visualizerModule as any).default || visualizerModule;
+const visualizer = visualizerModule as unknown as (options: Record<string, unknown>) => PluginOption;
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const isProduction = mode === 'production';

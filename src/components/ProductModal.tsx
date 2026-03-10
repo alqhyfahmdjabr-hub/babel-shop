@@ -46,12 +46,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
       ></div>
 
       {/* Modal Card Container */}
-      <div className="relative w-full sm:max-w-md bg-babil-card sm:rounded-[3rem] rounded-t-[3rem] shadow-2xl animate-slide-up border border-white/[0.05] max-h-[95vh] flex flex-col">
+      <div className="relative w-full sm:max-w-md app-surface sm:rounded-[3rem] rounded-t-[3rem] shadow-2xl animate-slide-up border max-h-[95vh] flex flex-col">
 
         {/* Close Button - Larger touch area & Fixed position */}
         <button
+          type="button"
           onClick={onClose}
           className="absolute top-6 left-6 z-50 p-3 bg-black/40 backdrop-blur-xl rounded-full text-white/80 hover:text-white border border-white/10 transition-colors duration-500 hover:bg-black/60"
+          aria-label="إغلاق"
+          title="إغلاق"
         >
           <X className="w-5 h-5" strokeWidth={1.5} />
         </button>
@@ -61,7 +64,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
 
           {/* Product Image Area - Taller */}
           <div className="relative h-[55vh] sm:h-[450px] w-full shrink-0">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-babil-card z-10"></div>
+            <div className="product-modal-image-fade" />
             <img
               src={product.imageUrl}
               alt={product.name}
@@ -78,14 +81,14 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
           </div>
 
           {/* Content Area */}
-          <div className="relative px-8 pt-2 pb-8 -mt-10 bg-babil-card rounded-t-[3rem] border-t border-white/[0.02] z-20 space-y-8 min-h-[200px]">
+          <div className="relative px-8 pt-2 pb-8 -mt-10 app-surface rounded-t-[3rem] border-t z-20 space-y-8 min-h-[200px]">
 
             {/* Header */}
             <div className="text-center pt-4">
-              <h2 className="text-3xl font-serif text-gold-100/90 mb-3 leading-tight tracking-wide">
+              <h2 className="text-3xl font-serif text-[var(--text-color)] mb-3 leading-tight tracking-wide">
                 {product.name}
               </h2>
-              <div className="flex items-center justify-center gap-3 text-[10px] text-gray-600 font-light tracking-widest uppercase">
+              <div className="flex items-center justify-center gap-3 text-[10px] text-[var(--text-muted)] font-light tracking-widest uppercase">
                 <span>مجوهرات ملكية</span>
                 <span className="w-0.5 h-0.5 bg-gold-600 rounded-full"></span>
                 <span>تصميم فريد</span>
@@ -94,19 +97,19 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
 
             {/* Specs Grid */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="py-6 px-4 rounded-[2rem] bg-white/[0.01] border border-white/[0.02] flex flex-col items-center justify-center gap-3 group hover:border-gold-500/10 transition-colors duration-700">
-                <Scale className="w-5 h-5 text-gray-600 group-hover:text-gold-500/50 transition-colors duration-500" strokeWidth={1} />
+              <div className="py-6 px-4 rounded-[2rem] app-card border flex flex-col items-center justify-center gap-3 group hover:border-gold-500/20 transition-colors duration-700">
+                <Scale className="w-5 h-5 text-[var(--text-muted)] group-hover:text-gold-500/50 transition-colors duration-500" strokeWidth={1} />
                 <div className="text-center">
-                  <span className="block text-[9px] text-gray-600 uppercase tracking-widest mb-1.5">الوزن الصافي</span>
-                  <span className="text-xl font-serif text-gray-200">{product.weight} <span className="text-[10px] text-gray-600 font-sans">جرام</span></span>
+                  <span className="block text-[9px] text-[var(--text-muted)] uppercase tracking-widest mb-1.5">الوزن الصافي</span>
+                  <span className="text-xl font-serif text-[var(--text-color)]">{product.weight} <span className="text-[10px] text-[var(--text-muted)] font-sans">جرام</span></span>
                 </div>
               </div>
 
-              <div className="py-6 px-4 rounded-[2rem] bg-white/[0.01] border border-white/[0.02] flex flex-col items-center justify-center gap-3 group hover:border-gold-500/10 transition-colors duration-700">
-                <Gem className="w-5 h-5 text-gray-600 group-hover:text-gold-500/50 transition-colors duration-500" strokeWidth={1} />
+              <div className="py-6 px-4 rounded-[2rem] app-card border flex flex-col items-center justify-center gap-3 group hover:border-gold-500/20 transition-colors duration-700">
+                <Gem className="w-5 h-5 text-[var(--text-muted)] group-hover:text-gold-500/50 transition-colors duration-500" strokeWidth={1} />
                 <div className="text-center">
-                  <span className="block text-[9px] text-gray-600 uppercase tracking-widest mb-1.5">التصنيف</span>
-                  <span className="text-xl font-serif text-gray-200">
+                  <span className="block text-[9px] text-[var(--text-muted)] uppercase tracking-widest mb-1.5">التصنيف</span>
+                  <span className="text-xl font-serif text-[var(--text-color)]">
                     {product.category === 'ring' ? 'خواتم' :
                       product.category === 'set' ? 'طقم كامل' :
                         product.category === 'bracelet' ? 'سوار' :
@@ -118,7 +121,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
 
             {/* Description */}
             {product.description && (
-              <p className="text-center text-gray-500 text-sm leading-8 font-light px-2 border-t border-b border-white/[0.02] py-6">
+              <p className="text-center text-[var(--text-muted)] text-sm leading-8 font-light px-2 border-y border-[color:var(--border-soft)] py-6">
                 {product.description}
               </p>
             )}
@@ -127,12 +130,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
             <div>
               <button
                 onClick={handleWhatsApp}
-                className="w-full py-5 rounded-2xl bg-gradient-to-r from-gold-500/20 via-gold-400/20 to-gold-500/20 text-gold-100 font-medium text-lg border border-gold-500/20 hover:bg-gold-500/30 transition-all duration-700 flex items-center justify-center gap-3 group"
+                className="w-full py-5 rounded-2xl bg-gradient-to-r from-gold-500/20 via-gold-400/20 to-gold-500/20 text-[var(--text-color)] font-medium text-lg border border-gold-500/20 hover:bg-gold-500/30 transition-all duration-700 flex items-center justify-center gap-3 group"
               >
                 <MessageCircle className="w-5 h-5 text-gold-400/80 group-hover:rotate-12 transition-transform duration-500" strokeWidth={1.5} />
                 <span className="font-serif tracking-wide">استفسار عن التفاصيل</span>
               </button>
-              <p className="text-center text-[10px] text-gray-600 mt-4 font-light tracking-wide">
+              <p className="text-center text-[10px] text-[var(--text-muted)] mt-4 font-light tracking-wide">
                 فاتورة رسمية موثقة تضمن حقك في الوزن والعيار
               </p>
             </div>
@@ -146,8 +149,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
       {/* --- نافذة اختيار العامل الجديدة --- */}
       {isWorkerModalOpen && (
         <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center px-6 animate-fade-in">
-          <div className="w-full max-w-xs bg-[#0a0a0a] border border-gold-500/20 rounded-[2.5rem] p-6 shadow-2xl relative">
-            <h4 className="text-gold-100 text-center font-serif text-lg mb-6 tracking-widest uppercase">
+          <div className="w-full max-w-xs app-surface border border-gold-500/20 rounded-[2.5rem] p-6 shadow-2xl relative">
+            <h4 className="text-[var(--text-color)] text-center font-serif text-lg mb-6 tracking-widest uppercase">
               اختر الموظف للتواصل
             </h4>
             
@@ -156,7 +159,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
                 <button
                   key={worker.id}
                   onClick={() => handleWorkerSelect(worker.phone)}
-                  className="w-full py-4 rounded-2xl bg-white/[0.03] hover:bg-gold-500/10 border border-white/[0.05] hover:border-gold-500/30 text-gold-100/90 text-sm font-medium transition-all duration-500 flex items-center justify-center gap-2 group"
+                  className="w-full py-4 rounded-2xl app-card border hover:border-gold-500/30 text-[var(--text-color)] text-sm font-medium transition-all duration-500 flex items-center justify-center gap-2 group"
                 >
                   <MessageCircle className="w-4 h-4 text-gold-500/50 group-hover:text-gold-500" strokeWidth={1} />
                   <span>الموظف {worker.name} - {worker.phone}</span>
@@ -166,7 +169,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
 
             <button
               onClick={() => setIsWorkerModalOpen(false)}
-              className="w-full mt-6 py-2 text-gray-500 hover:text-white text-xs font-light tracking-widest transition-colors duration-500"
+              className="w-full mt-6 py-2 text-[var(--text-muted)] hover:text-[var(--text-color)] text-xs font-light tracking-widest transition-colors duration-500"
             >
               إلغاء
             </button>

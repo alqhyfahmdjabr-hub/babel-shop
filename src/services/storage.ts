@@ -1,6 +1,6 @@
 import { Preferences } from '@capacitor/preferences';
-import { ClientRequest, AppPreferences } from '../types/types';
-import { PATTERNS } from '../constants';
+import { ClientRequest, AppPreferences, ThemeMode } from '../types/types';
+import { loadFromLocalStorage, saveToLocalStorage } from '../utils/helpers';
 
 const STORAGE_KEYS = {
   FAVORITES: 'favorites',
@@ -106,33 +106,42 @@ export const clearRequests = async (): Promise<void> => {
 
 // --- App Preferences ---
 
-const DEFAULT_PREFERENCES: AppPreferences = {
-  backgroundPattern: PATTERNS[0].url,
-  backgroundOpacity: 0.03
+const DEFAULT_PREFERENCES: AppPreferences = { theme: 'dark' };
+const LOCAL_PREFERENCES_KEY = 'babel-theme';
+
+const normalizeTheme = (value: unknown): ThemeMode => (value === 'light' ? 'light' : 'dark');
+
+const normalizePreferences = (prefs: unknown): AppPreferences => {
+  if (!prefs || typeof prefs !== 'object') return DEFAULT_PREFERENCES;
+  const theme = normalizeTheme((prefs as { theme?: unknown }).theme);
+  return { theme };
 };
 
 export const getAppPreferences = async (): Promise<AppPreferences> => {
+  const localPrefs = normalizePreferences(
+    loadFromLocalStorage<unknown>(LOCAL_PREFERENCES_KEY, DEFAULT_PREFERENCES)
+  );
+
   try {
     const { value } = await Preferences.get({ key: STORAGE_KEYS.PREFERENCES });
-    if (value) {
-      return { ...DEFAULT_PREFERENCES, ...JSON.parse(value) };
-    }
-    return DEFAULT_PREFERENCES;
+    if (!value) return localPrefs;
+
+    const storedPrefs = normalizePreferences(JSON.parse(value));
+    return { ...DEFAULT_PREFERENCES, ...localPrefs, ...storedPrefs };
   } catch (error) {
     console.error('Error loading preferences:', error);
-    return DEFAULT_PREFERENCES;
+    return localPrefs;
   }
 };
 
 export const saveAppPreferences = async (prefs: AppPreferences): Promise<void> => {
-  try {
-    await Preferences.set({ 
-      key: STORAGE_KEYS.PREFERENCES, 
-      value: JSON.stringify(prefs) 
-    });
-  } catch (error) {
-    console.error('Error saving preferences:', error);
-  }
+  const normalizedPrefs = normalizePreferences(prefs);
+  saveToLocalStorage(LOCAL_PREFERENCES_KEY, normalizedPrefs);
+
+  await Preferences.set({
+    key: STORAGE_KEYS.PREFERENCES,
+    value: JSON.stringify(normalizedPrefs)
+  });
 };
 
 // --- Cache Management ---
