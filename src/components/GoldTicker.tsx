@@ -244,7 +244,7 @@ export const GoldTicker: React.FC<GoldTickerProps> = ({ prices, liveOunceUsd, pr
         </p>
       </div>
 
-      <div className="relative overflow-hidden rounded-[2.5rem] border themed-panel shadow-[0_25px_90px_-40px_rgba(212,175,55,0.55)] backdrop-blur-2xl">
+      <div className="relative overflow-hidden rounded-[2.5rem] border border-[#D4AF37]/20 bg-[#0D0D0D]/80 shadow-[0_25px_90px_-40px_rgba(212,175,55,0.55)] backdrop-blur-2xl">
         <div className="border-b border-[#D4AF37]/15 bg-gradient-to-r from-[#120f03] via-[#0b0b0b] to-[#120f03] p-6">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className={`relative overflow-hidden rounded-2xl border border-[#D4AF37]/35 bg-[radial-gradient(circle_at_top,_rgba(255,223,0,0.24),_rgba(15,15,15,0.95)_60%)] p-5 transition-all duration-500 ${isOunceLockedToReal ? 'ring-1 ring-[#FFDF00]/70 shadow-[0_0_40px_rgba(255,223,0,0.35)]' : ''}`}>

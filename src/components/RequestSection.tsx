@@ -160,7 +160,7 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
   const fetchInspirations = async () => {
     setIsLoadingInspirations(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('design_inspirations')
         .select('id, title, image_url, is_active')
         .eq('is_active', true)
@@ -223,8 +223,8 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
       const optimized = await smartCompressImage(file);
       const imageUrl = URL.createObjectURL(optimized);
       setFormData((prev) => ({ ...prev, imageFile: optimized, imageUrl }));
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : '';
+    } catch (error: any) {
+      const msg = String(error?.message || '');
       if (msg.includes('cancel') || msg.includes('dismiss')) return;
       alert('حدث خطأ أثناء التقاط الصورة');
     } finally {
@@ -319,19 +319,19 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
   };
 
   const renderCreateView = (
-    <form onSubmit={handleSubmit} className="space-y-4 app-surface p-5 rounded-3xl border">
-      <h3 className="text-2xl font-serif text-[var(--text-color)]">الاستوديو الذكي</h3>
-      <label className="block text-xs text-[var(--text-muted)]" htmlFor="request-piece-name">اسم القطعة</label>
-      <input id="request-piece-name" className="app-input" value={pieceName} onChange={(e) => setPieceName(e.target.value)} placeholder="اكتب اسم القطعة..." />
+    <form onSubmit={handleSubmit} className="space-y-4 bg-[#0A0A0A] p-5 rounded-3xl border border-white/10">
+      <h3 className="text-2xl font-serif text-gold-100">الاستوديو الذكي</h3>
+      <label className="block text-xs text-gray-400" htmlFor="request-piece-name">اسم القطعة</label>
+      <input id="request-piece-name" className="w-full rounded-xl bg-[#121212] p-3 border border-gray-700" value={pieceName} onChange={(e) => setPieceName(e.target.value)} placeholder="اكتب اسم القطعة..." />
       <div className="flex gap-2">
         <button type="button" onClick={() => { setPieceName('خاتم'); setPieceType('ring'); }} className="px-3 py-1 rounded-full border border-gold-500/30">خاتم</button>
         <button type="button" onClick={() => { setPieceName('عقد'); setPieceType('necklace'); }} className="px-3 py-1 rounded-full border border-gold-500/30">عقد</button>
         <button type="button" onClick={() => { setPieceName('سوار'); setPieceType('bracelet'); }} className="px-3 py-1 rounded-full border border-gold-500/30">سوار</button>
       </div>
 
-      <div className="rounded-2xl app-card border p-3">
+      <div className="rounded-2xl border border-white/10 p-3">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-[var(--text-color)]">صور الإلهام للتصميم</span>
+          <span className="text-xs text-gray-300">صور الإلهام للتصميم</span>
           <button type="button" onClick={() => void fetchInspirations()} className="text-[11px] text-gold-400">تحديث</button>
         </div>
         {isLoadingInspirations ? <p className="text-xs text-gray-500">جاري تحميل صور الإلهام...</p> : (
@@ -346,23 +346,23 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
         )}
       </div>
 
-      <label className="block text-xs text-[var(--text-muted)]" htmlFor="request-karat">العيار لحساب التقدير</label>
-      <select id="request-karat" className="app-input" title="العيار لحساب التقدير" value={selectedKarat} onChange={(e) => setSelectedKarat(Number(e.target.value) as 18 | 21 | 24)}>
+      <label className="block text-xs text-gray-400" htmlFor="request-karat">العيار لحساب التقدير</label>
+      <select id="request-karat" title="العيار لحساب التقدير" className="w-full rounded-xl bg-[#121212] p-3 border border-gray-700" value={selectedKarat} onChange={(e) => setSelectedKarat(Number(e.target.value) as 18 | 21 | 24)}>
         <option value={18}>18K</option><option value={21}>21K</option><option value={24}>24K</option>
       </select>
       <p className="text-sm text-gold-300">التقدير المبدئي للذهب (دولار): {rawGoldEstimateUsd ? rawGoldEstimateUsd.toFixed(2) : '--'}</p>
       <p className="text-[11px] text-orange-300">أجور المصنعية تُحدّد عبر واتساب</p>
 
-      <button type="button" onClick={openCameraOrGallery} className="w-full rounded-2xl app-card border border-dashed p-4">
+      <button type="button" onClick={openCameraOrGallery} className="w-full rounded-2xl border border-dashed border-gray-700 p-4">
         {isProcessingImage ? <span>{processingMessage}</span> : formData.imageUrl ? <img src={formData.imageUrl} alt="preview" className="w-full h-40 object-contain" /> : <span className="flex items-center justify-center gap-2"><Camera className="w-4 h-4" /> رفع صورة القطعة</span>}
       </button>
 
-      <label className="text-xs text-[var(--text-muted)] flex items-center gap-2" htmlFor="request-phone"><Smartphone className="w-4 h-4 text-gold-500" />رقم الهاتف</label>
-      <input id="request-phone" className="app-input" dir="ltr" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="77xxxxxxx" />
-      <label className="text-xs text-[var(--text-muted)] flex items-center gap-2" htmlFor="request-weight"><Scale className="w-4 h-4 text-gold-500" />الوزن (جرام)</label>
-      <input id="request-weight" type="number" step="0.1" className="app-input" value={formData.weight} onChange={(e) => setFormData({ ...formData, weight: e.target.value })} />
-      <label className="text-xs text-[var(--text-muted)] flex items-center gap-2" htmlFor="request-notes"><FileText className="w-4 h-4 text-gold-500" />ملاحظات</label>
-      <textarea id="request-notes" rows={3} className="app-input" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} />
+      <label className="text-xs text-gray-400 flex items-center gap-2" htmlFor="request-phone"><Smartphone className="w-4 h-4 text-gold-500" />رقم الهاتف</label>
+      <input id="request-phone" className="w-full rounded-xl bg-[#121212] p-3 border border-gray-700" dir="ltr" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="77xxxxxxx" />
+      <label className="text-xs text-gray-400 flex items-center gap-2" htmlFor="request-weight"><Scale className="w-4 h-4 text-gold-500" />الوزن (جرام)</label>
+      <input id="request-weight" type="number" step="0.1" className="w-full rounded-xl bg-[#121212] p-3 border border-gray-700" value={formData.weight} onChange={(e) => setFormData({ ...formData, weight: e.target.value })} />
+      <label className="text-xs text-gray-400 flex items-center gap-2" htmlFor="request-notes"><FileText className="w-4 h-4 text-gold-500" />ملاحظات</label>
+      <textarea id="request-notes" rows={3} className="w-full rounded-xl bg-[#121212] p-3 border border-gray-700" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} />
 
       <div className="bg-orange-500/5 border border-orange-500/20 p-3 rounded-xl text-[11px] text-orange-200/80 flex gap-2">
         <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -386,7 +386,7 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
         </div>
       ) : (
         myOrders.map((order) => (
-          <div key={order.id} className="app-surface border rounded-2xl p-4">
+          <div key={order.id} className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-4">
             <div className="flex gap-3">
               <img src={order.imageUrl} alt="order" className="w-20 h-20 rounded-xl object-cover" />
               <div className="flex-1">
@@ -415,24 +415,24 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
 
   if (isSuccess) {
     return (
-      <div className="app-surface p-8 rounded-[2.5rem] border border-gold-500/20 text-center">
+      <div className="bg-[#0A0A0A] p-8 rounded-[2.5rem] border border-gold-500/20 text-center">
         <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-        <h3 className="text-2xl font-serif text-[var(--text-color)] mb-2">تم استلام طلبك بنجاح</h3>
+        <h3 className="text-2xl font-serif text-gold-100 mb-2">تم استلام طلبك بنجاح</h3>
         <button onClick={openWorkerPickerForOrder} className="w-full py-4 rounded-2xl bg-[#25D366] text-white font-bold mb-3">
           <MessageCircle className="w-5 h-5 inline ml-2" />تأكيد عبر واتساب
         </button>
-        <button onClick={() => { setIsSuccess(false); setActiveView('track'); void fetchMyOrders(); }} className="text-sm text-[var(--text-muted)] hover:text-gold-500">العودة للطلبات</button>
+        <button onClick={() => { setIsSuccess(false); setActiveView('track'); void fetchMyOrders(); }} className="text-sm text-gray-400 hover:text-gold-300">العودة للطلبات</button>
       </div>
     );
   }
 
   return (
     <div className="animate-fade-in pb-12">
-      <div className="flex themed-panel p-1.5 rounded-2xl mb-8 border">
-        <button onClick={() => setActiveView('create')} className={`flex-1 py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 ${activeView === 'create' ? 'app-card text-gold-500 border border-gold-500/20' : 'text-[var(--text-muted)]'}`}>
+      <div className="flex bg-[#0D0D0D] p-1.5 rounded-2xl mb-8 border border-white/[0.05]">
+        <button onClick={() => setActiveView('create')} className={`flex-1 py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 ${activeView === 'create' ? 'bg-[#181818] text-gold-400 border border-gold-500/20' : 'text-gray-600'}`}>
           <Camera className="w-4 h-4" />طلب جديد
         </button>
-        <button onClick={() => setActiveView('track')} className={`flex-1 py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 ${activeView === 'track' ? 'app-card text-gold-500 border border-gold-500/20' : 'text-[var(--text-muted)]'}`}>
+        <button onClick={() => setActiveView('track')} className={`flex-1 py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 ${activeView === 'track' ? 'bg-[#181818] text-gold-400 border border-gold-500/20' : 'text-gray-600'}`}>
           <ClipboardList className="w-4 h-4" />متابعة طلباتي
         </button>
       </div>
@@ -443,16 +443,16 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
 
       {isWorkerModalOpen && (
         <div className="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm flex items-center justify-center px-4">
-          <div className="w-full max-w-sm app-surface border rounded-2xl p-5">
+          <div className="w-full max-w-sm bg-[#111] border border-white/10 rounded-2xl p-5">
             <h4 className="text-gold-300 font-bold mb-4 text-center">اختر الموظف للتواصل</h4>
             <div className="space-y-2">
               {contact.workers.map((worker) => (
-                <button key={worker.id} onClick={() => { window.open(`https://wa.me/967${worker.phone}?text=${pendingWhatsAppMessage}`, '_blank'); setIsWorkerModalOpen(false); setPendingWhatsAppMessage(''); }} className="w-full py-3 rounded-xl app-card border text-[var(--text-color)] text-sm font-bold">
+                <button key={worker.id} onClick={() => { window.open(`https://wa.me/967${worker.phone}?text=${pendingWhatsAppMessage}`, '_blank'); setIsWorkerModalOpen(false); setPendingWhatsAppMessage(''); }} className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-bold">
                   الموظف {worker.name} - {worker.phone}
                 </button>
               ))}
             </div>
-            <button onClick={() => { setIsWorkerModalOpen(false); setPendingWhatsAppMessage(''); }} className="w-full mt-3 py-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-color)]">إلغاء</button>
+            <button onClick={() => { setIsWorkerModalOpen(false); setPendingWhatsAppMessage(''); }} className="w-full mt-3 py-2 rounded-xl text-gray-300 hover:text-white">إلغاء</button>
           </div>
         </div>
       )}

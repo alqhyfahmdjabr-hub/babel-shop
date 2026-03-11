@@ -44,12 +44,12 @@ export const ProductCard: React.FC<ProductCardProps> = memo(({ product, isFav, o
   };
 
   return (
-    <div
-      className="group relative app-card rounded-[2rem] overflow-hidden transition-all duration-700 ease-out hover:shadow-[0_10px_30px_-5px_rgba(180,140,40,0.1)] hover:-translate-y-1 cursor-pointer border hover:border-gold-500/30"
-      onClick={handleCardClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+      <div
+        className="group relative bg-[#080808] rounded-[2rem] overflow-hidden transition-all duration-700 ease-out hover:shadow-[0_10px_30px_-5px_rgba(180,140,40,0.1)] hover:-translate-y-1 cursor-pointer border border-white/[0.05] hover:border-gold-500/30"
+        onClick={handleCardClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
       {/* Image Container */}
       <div className="relative aspect-[4/5] overflow-hidden">
         {/* Skeleton Loader */}

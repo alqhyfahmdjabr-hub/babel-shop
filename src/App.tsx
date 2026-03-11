@@ -81,12 +81,15 @@ const App: FC = () => {
   const [liveOunceUsd, setLiveOunceUsd] = useState<number | null>(null);
   const [pricingSettings, setPricingSettings] = useState<PricingSettings>(DEFAULT_PRICING_SETTINGS);
 
-  const [preferences, setPreferences] = useState<AppPreferences>({ theme: 'dark' });
+  const [preferences, setPreferences] = useState<AppPreferences>({
+    backgroundPattern: 'https://www.transparenttextures.com/patterns/arabesque.png',
+    backgroundOpacity: 0.03
+  });
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = preferences.theme;
-    document.body.dataset.theme = preferences.theme;
-  }, [preferences.theme]);
+  const [bgState, setBgState] = useState({
+    layers: [preferences.backgroundPattern, preferences.backgroundPattern],
+    activeIdx: 0
+  });
 
   // Modal States
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -130,6 +133,10 @@ const App: FC = () => {
       setLoadingError('');
       const loadedPrefs = await getAppPreferences();
       setPreferences(loadedPrefs);
+      setBgState({
+        layers: [loadedPrefs.backgroundPattern, loadedPrefs.backgroundPattern],
+        activeIdx: 0
+      });
 
       const minWaitPromise = new Promise(resolve => setTimeout(resolve, 1500));
       const [fetchedPrices, fetchedProducts, fetchedOunceUsd, fetchedPricingSettings] = await Promise.all([
@@ -299,6 +306,25 @@ const App: FC = () => {
   };
 
   // ==========================================
+  // 🎨 Background Effect
+  // ==========================================
+  useEffect(() => {
+    const currentActivePattern = bgState.layers[bgState.activeIdx];
+    if (preferences.backgroundPattern !== currentActivePattern) {
+      const img = new Image();
+      img.src = preferences.backgroundPattern;
+      img.onload = () => {
+        setBgState(prev => {
+          const nextIdx = prev.activeIdx === 0 ? 1 : 0;
+          const newLayers = [...prev.layers];
+          newLayers[nextIdx] = preferences.backgroundPattern;
+          return { layers: newLayers, activeIdx: nextIdx };
+        });
+      };
+    }
+  }, [preferences.backgroundPattern, bgState.layers, bgState.activeIdx]);
+
+  // ==========================================
   // ❤️ Favorites Handler
   // ==========================================
   const handleToggleFavorite = useCallback(async (id: string) => {
@@ -433,7 +459,7 @@ const App: FC = () => {
   // ==========================================
   if (isGlobalLoading) {
     return (
-      <div data-theme={preferences.theme} className="app-shell min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-[#020202] flex items-center justify-center">
         <Loader2 className="w-10 h-10 text-gold-500 animate-spin" />
       </div>
     );
@@ -441,15 +467,9 @@ const App: FC = () => {
 
   if (isLoading) {
     return (
-      <div
-        data-theme={preferences.theme}
-        className="app-shell min-h-screen flex flex-col items-center justify-center relative overflow-hidden z-50"
-      >
-        <div className="bg-noise" />
-        <div className="absolute inset-0 z-0 pointer-events-none app-bg-gradient" />
-        <div
-          className="absolute inset-0 z-0 pointer-events-none app-watermark"
-        />
+      <div className="min-h-screen bg-[#020202] flex flex-col items-center justify-center relative overflow-hidden z-50">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] opacity-[0.03]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gold-900/20 via-[#020202] to-[#020202]" />
         
         <div className="relative z-10 flex flex-col items-center justify-center w-full px-4">
           <div className="relative mb-12 group">
@@ -501,19 +521,36 @@ const App: FC = () => {
   // ==========================================
   return (
     <ErrorBoundary>
-      <div
-        data-theme={preferences.theme}
-        className="app-shell min-h-screen font-sans pb-32 selection:bg-gold-900/30 selection:text-gold-100 relative overflow-hidden animate-fade-in"
-      >
+      <div className="min-h-screen bg-[#020202] font-sans pb-32 selection:bg-gold-900/30 selection:text-gold-100 relative overflow-hidden animate-fade-in text-gray-200">
         {/* 🆕 NEW: Toast Notifications */}
         <ToastContainer toasts={toasts} onRemove={removeToast} />
         
         {/* Background Effects */}
         <div className="bg-noise" />
         <div className="fixed inset-0 z-0 pointer-events-none">
-          <div className="absolute inset-0 bg-[var(--bg-color)]" />
-          <div className="absolute inset-0 app-bg-gradient" />
-          <div className="absolute inset-0 z-0 app-watermark" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#020202] via-[#080808] to-[#050505]" />
+          <div
+            className="absolute inset-0 z-0 opacity-[0.05]"
+            style={{
+              backgroundImage: `url('${BACKGROUND_LOGO_URL}')`,
+              backgroundPosition: 'center 40%',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: '100vw',
+              filter: 'grayscale(100%) blur(0.5px)'
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/50 z-10" />
+          {bgState.layers.map((patternUrl, index) => (
+            <div
+              key={index}
+              className="absolute inset-0 z-20 bg-repeat transition-opacity duration-[2000ms]"
+              style={{
+                backgroundImage: `url('${patternUrl}')`,
+                opacity: bgState.activeIdx === index ? preferences.backgroundOpacity : 0,
+                filter: 'invert(1) contrast(0.7)'
+              }}
+            />
+          ))}
         </div>
 
         <div className="relative z-10">
@@ -701,7 +738,7 @@ const App: FC = () => {
         </div>
 
         {/* Bottom Navigation */}
-        <nav className="fixed bottom-6 left-6 right-6 h-20 themed-panel backdrop-blur-xl border rounded-full z-40 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] max-w-md mx-auto">
+        <nav className="fixed bottom-6 left-6 right-6 h-20 bg-[#080808]/80 backdrop-blur-xl border border-white/10 rounded-full z-40 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] max-w-md mx-auto">
           <div className="flex justify-around items-center h-full px-2">
             {[
               { id: 'home', icon: Home, label: 'الرئيسية' },
@@ -737,8 +774,8 @@ const App: FC = () => {
         </nav>
 
         {/* Status Bar */}
-        <div className="fixed bottom-0 left-0 right-0 h-6 app-surface border-t flex items-center justify-between px-6 z-30">
-          <div className="flex items-center gap-2 text-[9px] text-[var(--text-muted)]">
+        <div className="fixed bottom-0 left-0 right-0 h-6 bg-[#020202] border-t border-white/10 flex items-center justify-between px-6 z-30">
+          <div className="flex items-center gap-2 text-[9px] text-gray-500">
             <span className={`w-1.5 h-1.5 rounded-full ${isLoading || isRefreshing ? 'bg-yellow-500 animate-pulse' : 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]'}`} />
             <span className="font-sans font-medium tracking-wide">
               {activeTab === 'home' ? 'الرئيسية' : activeTab === 'catalog' ? 'المعرض العام' : activeTab === 'requests' ? 'قسم الطلبات الخاصة' : 'المفضلة'}

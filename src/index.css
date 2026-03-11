@@ -4,40 +4,6 @@
 
 /* Base Styles */
 @layer base {
-  :root {
-    --bg-color: #020202;
-    --bg-gradient: linear-gradient(to bottom, #020202, #080808, #050505);
-    --surface-color: rgba(15, 15, 15, 0.92);
-    --card-color: rgba(10, 10, 10, 0.94);
-    --text-color: #ece6d9;
-    --text-muted: #8b8474;
-    --border-soft: rgba(212, 175, 55, 0.18);
-    --gold-accent: #d4af37;
-    --logo-watermark-opacity: 0.05;
-    --logo-watermark-filter: grayscale(100%) blur(0.5px);
-
-    --scrollbar-track: #0b0b0b;
-    --scrollbar-thumb: rgba(212, 175, 55, 0.35);
-    --scrollbar-thumb-hover: rgba(212, 175, 55, 0.55);
-  }
-
-  :root[data-theme='light'] {
-    --bg-color: #fcf9f2;
-    --bg-gradient: linear-gradient(to bottom, #fcf9f2, #f7f1e6, #f3ebdd);
-    --surface-color: rgba(255, 251, 244, 0.94);
-    --card-color: rgba(255, 250, 241, 0.96);
-    --text-color: #1a1a1a;
-    --text-muted: #6e6659;
-    --border-soft: rgba(212, 175, 55, 0.22);
-    --gold-accent: #d4af37;
-    --logo-watermark-opacity: 0.09;
-    --logo-watermark-filter: sepia(1) saturate(0.35) brightness(1.55) contrast(0.82) blur(0.45px);
-
-    --scrollbar-track: rgba(26, 26, 26, 0.06);
-    --scrollbar-thumb: rgba(212, 175, 55, 0.45);
-    --scrollbar-thumb-hover: rgba(212, 175, 55, 0.6);
-  }
-
   * {
     @apply box-border;
   }
@@ -49,12 +15,10 @@
   }
 
   body {
-    @apply font-sans;
+    @apply bg-dark-950 text-gray-200 font-sans;
     direction: rtl;
     min-height: 100vh;
     overflow-x: hidden;
-    background: var(--bg-color);
-    color: var(--text-color);
   }
 
   /* Custom Scrollbar */
@@ -64,16 +28,15 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--scrollbar-track);
+    @apply bg-dark-900;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb);
-    border-radius: 9999px;
+    @apply bg-gold-600/30 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--scrollbar-thumb-hover);
+    @apply bg-gold-600/50;
   }
 
   /* Selection */
@@ -84,104 +47,6 @@
 
 /* Components */
 @layer components {
-  .app-shell {
-    background: var(--bg-color);
-    color: var(--text-color);
-  }
-
-  .app-surface {
-    background: var(--surface-color);
-    border-color: var(--border-soft);
-    color: var(--text-color);
-  }
-
-  .app-card {
-    background: var(--card-color);
-    border-color: var(--border-soft);
-    color: var(--text-color);
-  }
-
-  .themed-panel {
-    background: var(--surface-color);
-    border-color: var(--border-soft);
-  }
-
-  .settings-section-title {
-    @apply text-[10px] mb-4 tracking-widest uppercase flex items-center gap-2 font-bold;
-    color: var(--text-muted);
-  }
-
-  .theme-toggle-card {
-    @apply w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-500;
-    background: var(--card-color);
-    border-color: var(--border-soft);
-  }
-
-  .theme-toggle-card:hover {
-    border-color: rgba(212, 175, 55, 0.35);
-  }
-
-  .theme-switch {
-    @apply relative h-7 w-14 rounded-full border transition-colors duration-500;
-    background: rgba(212, 175, 55, 0.12);
-    border-color: var(--border-soft);
-  }
-
-  .theme-switch-thumb {
-    @apply absolute top-0.5 left-0.5 h-6 w-6 rounded-full transition-transform duration-500;
-    background: var(--gold-accent);
-    box-shadow: 0 6px 18px rgba(212, 175, 55, 0.28);
-  }
-
-  .theme-switch.is-light {
-    background: rgba(212, 175, 55, 0.18);
-  }
-
-  .theme-switch.is-light .theme-switch-thumb {
-    transform: translateX(28px);
-  }
-
-  .app-input {
-    @apply w-full rounded-xl p-3 border transition-all duration-300 focus:outline-none;
-    background: var(--card-color);
-    border-color: var(--border-soft);
-    color: var(--text-color);
-  }
-
-  .app-input::placeholder {
-    color: var(--text-muted);
-  }
-
-  .product-modal-image-fade {
-    @apply absolute inset-0 z-10;
-    background: linear-gradient(to bottom, transparent, transparent, var(--surface-color));
-  }
-
-  .app-bg-gradient {
-    background: var(--bg-gradient);
-  }
-
-  .app-watermark {
-    background-image: url("https://i.postimg.cc/25Knz1yL/babl3.png");
-    background-position: center 40%;
-    background-repeat: no-repeat;
-    background-size: 100vw;
-    opacity: var(--logo-watermark-opacity);
-    filter: var(--logo-watermark-filter);
-  }
-
-  .anim-delay-150 {
-    animation-delay: 0.15s;
-  }
-
-  .anim-delay-300 {
-    animation-delay: 0.3s;
-  }
-
-  .anim-delay-600 {
-    animation-delay: 0.6s;
-  }
-
   /* Noise Texture */
   .bg-noise {
     position: fixed;

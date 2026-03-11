@@ -46,10 +46,9 @@ export interface ContactInfo {
 }
 
 // App Preferences Types
-export type ThemeMode = 'dark' | 'light';
-
 export interface AppPreferences {
-  theme: ThemeMode;
+  backgroundPattern: string;
+  backgroundOpacity: number;
 }
 
 // Global Pricing Settings Types (from Supabase app_settings table)
@@ -58,6 +57,13 @@ export type PricingCalcMethod = 'db_prices' | 'from_ounce';
 export interface PricingSettings {
   exchangeRate: number;
   calcMethod: PricingCalcMethod;
+}
+
+// Pattern Types
+export interface Pattern {
+  id: string;
+  name: string;
+  url: string;
 }
 
 // View State Types
