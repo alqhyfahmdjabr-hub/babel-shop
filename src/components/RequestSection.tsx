@@ -160,7 +160,7 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
   const fetchInspirations = async () => {
     setIsLoadingInspirations(true);
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('design_inspirations')
         .select('id, title, image_url, is_active')
         .eq('is_active', true)
@@ -223,8 +223,8 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
       const optimized = await smartCompressImage(file);
       const imageUrl = URL.createObjectURL(optimized);
       setFormData((prev) => ({ ...prev, imageFile: optimized, imageUrl }));
-    } catch (error: any) {
-      const msg = String(error?.message || '');
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : '';
       if (msg.includes('cancel') || msg.includes('dismiss')) return;
       alert('حدث خطأ أثناء التقاط الصورة');
     } finally {

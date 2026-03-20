@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Check, Lock, LogOut, Paintbrush, Sliders, Sparkles, X } from 'lucide-react';
 import { PATTERNS } from '../constants';
-import { X, Lock, Paintbrush, Sliders, LogOut } from 'lucide-react';
 import { AppPreferences } from '../types/types';
-
 
 interface SettingsModalProps {
   preferences: AppPreferences;
@@ -11,6 +10,12 @@ interface SettingsModalProps {
   onClose: () => void;
   onLogout: () => void;
 }
+
+const OPACITY_PRESETS = [
+  { label: 'هادئ', value: 0.02 },
+  { label: 'متوازن', value: 0.04 },
+  { label: 'أوضح', value: 0.06 }
+];
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   preferences,
@@ -21,145 +26,207 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [localOpacity, setLocalOpacity] = useState(preferences.backgroundOpacity);
 
-  // ✅ تحديث القيمة المحلية عند تغير الـ props
   useEffect(() => {
     setLocalOpacity(preferences.backgroundOpacity);
   }, [preferences.backgroundOpacity]);
 
   const handlePatternSelect = (url: string) => {
-    const newPrefs = { ...preferences, backgroundPattern: url };
-    onUpdatePreferences(newPrefs);
+    onUpdatePreferences({ ...preferences, backgroundPattern: url });
   };
 
   const handleOpacityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    setLocalOpacity(val);
+    setLocalOpacity(parseFloat(e.target.value));
   };
 
-  const handleOpacityCommit = () => {
-    const newPrefs = { ...preferences, backgroundOpacity: localOpacity };
-    onUpdatePreferences(newPrefs);
+  const commitOpacity = (value: number = localOpacity) => {
+    onUpdatePreferences({ ...preferences, backgroundOpacity: value });
   };
+
+  const patternSelectionDisabled = !preferences.backgroundPattern;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-fade-in" onClick={onClose}></div>
+      <div
+        className="absolute inset-0 bg-black/80 backdrop-blur-md animate-fade-in"
+        onClick={onClose}
+      />
 
-      {/* Modal Content */}
-      <div className="relative bg-[#0F0F0F] border border-gold-600/30 w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl animate-scale-up">
-
-        {/* Header */}
-        <div className="bg-neutral-900/80 p-6 border-b border-gray-800/50 flex justify-between items-center">
-          <h2 className="text-xl font-serif font-bold text-gold-500 flex items-center gap-2">
-            <Sliders className="w-5 h-5" />
+      <div className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] border border-gold-600/30 bg-[#0F0F0F] shadow-2xl animate-scale-up">
+        <div className="flex items-center justify-between border-b border-gray-800/50 bg-neutral-900/80 p-6">
+          <h2 className="flex items-center gap-2 text-xl font-serif font-bold text-gold-500">
+            <Sliders className="h-5 w-5" />
             تفضيلات العرض
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors"
+            className="rounded-full bg-white/5 p-2 transition-colors hover:bg-white/10"
             aria-label="إغلاق"
             title="إغلاق"
           >
-            <X className="w-5 h-5 text-gray-300" />
+            <X className="h-5 w-5 text-gray-300" />
           </button>
         </div>
 
-        <div className="p-6 space-y-8 overflow-y-auto max-h-[75vh]">
-
-          {/* Background Selection Section */}
+        <div className="max-h-[75vh] space-y-8 overflow-y-auto p-6">
           <section>
-            <h3 className="text-gray-400 text-[10px] mb-4 tracking-widest uppercase flex items-center gap-2 font-bold">
-              <Paintbrush className="w-4 h-4 text-gold-600" />
-              نمط النقش والخلفية
-            </h3>
-
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              {PATTERNS.map((pattern) => (
-                <button
-                  key={pattern.id}
-                  type="button"
-                  onClick={() => handlePatternSelect(pattern.url)}
-                  className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-500 group ${preferences.backgroundPattern === pattern.url ? 'border-gold-500 scale-105 shadow-[0_0_20px_rgba(212,175,55,0.2)]' : 'border-gray-800 hover:border-gray-600'}`}
-                  aria-label={pattern.name}
-                >
-                  <span className="sr-only">{pattern.name}</span>
-                  <div className="absolute inset-0 bg-neutral-900"></div>
-                  <div
-                    className="absolute inset-0 opacity-40"
-                    style={{ backgroundImage: `url(${pattern.url})`, backgroundSize: 'cover' }}
-                  ></div>
-
-                  {preferences.backgroundPattern === pattern.url && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gold-500/10 backdrop-blur-[1px]">
-                      <div className="w-2 h-2 bg-gold-500 rounded-full shadow-[0_0_10px_#D4AF37]"></div>
-                    </div>
-                  )}
-
-                </button>
-              ))}
+            <div className="mb-4">
+              <h3 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                <Paintbrush className="h-4 w-4 text-gold-600" />
+                نمط النقش والخلفية
+              </h3>
+              <p className="mt-2 text-xs leading-6 text-gray-500">
+                النقوشات الهادئة تخدم هوية المجوهرات أفضل. الخيار الموصى به هو
+                <span className="mx-1 text-gold-300">أرابيسك هادئ</span>
+                مع وضوح بين 2% و5%.
+              </p>
             </div>
 
-            {/* Opacity Slider */}
-            <div className="bg-black/40 p-5 rounded-2xl border border-white/5 shadow-inner">
-              <div className="flex justify-between text-[10px] text-gray-500 mb-3 font-bold tracking-wider">
+            <div className="mb-6 space-y-3">
+              {PATTERNS.map((pattern) => {
+                const isSelected = preferences.backgroundPattern === pattern.url;
+                const hasPattern = Boolean(pattern.url);
+
+                return (
+                  <button
+                    key={pattern.id}
+                    type="button"
+                    onClick={() => handlePatternSelect(pattern.url)}
+                    className={`flex w-full items-center gap-4 rounded-3xl border p-3 text-right transition-all duration-300 ${
+                      isSelected
+                        ? 'border-gold-500/50 bg-gold-500/10 shadow-[0_0_20px_rgba(212,175,55,0.12)]'
+                        : 'border-white/5 bg-black/20 hover:border-gold-500/20 hover:bg-white/[0.03]'
+                    }`}
+                    aria-label={pattern.name}
+                  >
+                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-white/5 bg-[#111111]">
+                      {hasPattern ? (
+                        <div
+                          className="absolute inset-0 bg-repeat opacity-80"
+                          style={{
+                            backgroundImage: `url('${pattern.url}')`,
+                            backgroundSize: '120px'
+                          }}
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-[#191919] to-[#0B0B0B]" />
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-gray-100">{pattern.name}</span>
+                          {pattern.recommended ? (
+                            <span className="rounded-full border border-gold-500/20 bg-gold-500/10 px-2 py-0.5 text-[10px] font-bold text-gold-300">
+                              موصى به
+                            </span>
+                          ) : null}
+                        </div>
+                        {isSelected ? <Check className="h-4 w-4 text-gold-400" /> : null}
+                      </div>
+
+                      {pattern.description ? (
+                        <p className="mt-1 text-[11px] text-gray-500">{pattern.description}</p>
+                      ) : null}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div
+              className={`rounded-2xl border border-white/5 bg-black/40 p-5 shadow-inner transition-opacity ${
+                patternSelectionDisabled ? 'opacity-50' : ''
+              }`}
+            >
+              <div className="mb-3 flex items-center justify-between text-[10px] font-bold tracking-wider text-gray-500">
                 <span>وضوح النقش</span>
                 <span className="text-gold-500/80">{Math.round(localOpacity * 100)}%</span>
               </div>
+
               <input
                 type="range"
                 min="0"
-                max="0.3"
+                max="0.12"
                 step="0.01"
                 value={localOpacity}
                 onChange={handleOpacityChange}
-                onMouseUp={handleOpacityCommit}
-                onTouchEnd={handleOpacityCommit}
-                className="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-gold-600"
+                onMouseUp={() => commitOpacity()}
+                onTouchEnd={() => commitOpacity()}
+                onKeyUp={() => commitOpacity()}
+                disabled={patternSelectionDisabled}
+                className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-gray-800 accent-gold-600 disabled:cursor-not-allowed"
               />
+
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                {OPACITY_PRESETS.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => {
+                      setLocalOpacity(preset.value);
+                      commitOpacity(preset.value);
+                    }}
+                    disabled={patternSelectionDisabled}
+                    className={`rounded-xl border px-3 py-2 text-xs font-bold transition-colors ${
+                      Math.abs(localOpacity - preset.value) < 0.005
+                        ? 'border-gold-500/40 bg-gold-500/10 text-gold-200'
+                        : 'border-white/5 bg-white/[0.03] text-gray-400 hover:text-gray-200'
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </section>
 
-          {/* Admin Access Section */}
           <section className="pt-2">
-            <h3 className="text-gray-500 text-[10px] mb-3 tracking-widest uppercase font-bold px-1">إعدادات متقدمة</h3>
+            <h3 className="mb-3 px-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+              إعدادات متقدمة
+            </h3>
             <button
-              onClick={() => { onClose(); onOpenAdmin(); }}
-              className="w-full flex items-center justify-between p-4 bg-neutral-900/40 border border-gray-800 rounded-2xl hover:border-gold-500/30 hover:bg-neutral-800 transition-all duration-500 group"
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenAdmin();
+              }}
+              className="group flex w-full items-center justify-between rounded-2xl border border-gray-800 bg-neutral-900/40 p-4 transition-all duration-300 hover:border-gold-500/30 hover:bg-neutral-800"
             >
               <div className="flex items-center gap-4">
-                <div className="p-2.5 bg-gold-500/5 rounded-xl group-hover:bg-gold-500/10 transition-colors border border-gold-500/10">
-                  <Lock className="w-5 h-5 text-gold-600" strokeWidth={1.5} />
+                <div className="rounded-xl border border-gold-500/10 bg-gold-500/5 p-2.5 transition-colors group-hover:bg-gold-500/10">
+                  <Lock className="h-5 w-5 text-gold-600" strokeWidth={1.5} />
                 </div>
                 <div className="text-right">
-                  <span className="block text-gray-200 font-bold text-sm">بوابة الإدارة</span>
-                  <span className="block text-gray-500 text-[10px]">خاص بمالك التطبيق</span>
+                  <span className="block text-sm font-bold text-gray-200">بوابة الإدارة</span>
+                  <span className="block text-[10px] text-gray-500">خاص بمالك التطبيق</span>
                 </div>
               </div>
-              <div className="text-gray-600 group-hover:text-gold-500 transition-all group-hover:translate-x-[-4px]">←</div>
+              <Sparkles className="h-4 w-4 text-gold-500/60 transition-transform group-hover:scale-110" />
             </button>
           </section>
 
-          {/* Account & Logout Section */}
-          <section className="pt-2 pb-2">
-            <h3 className="text-gray-500 text-[10px] mb-3 tracking-widest uppercase font-bold px-1">الحساب</h3>
+          <section className="pb-2 pt-2">
+            <h3 className="mb-3 px-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+              الحساب
+            </h3>
             <button
+              type="button"
               onClick={onLogout}
-              className="w-full flex items-center justify-between p-4 bg-red-500/5 border border-red-500/10 rounded-2xl hover:bg-red-500/10 hover:border-red-500/20 transition-all duration-300 group"
+              className="group flex w-full items-center justify-between rounded-2xl border border-red-500/10 bg-red-500/5 p-4 transition-all duration-300 hover:border-red-500/20 hover:bg-red-500/10"
             >
               <div className="flex items-center gap-4">
-                <div className="p-2.5 bg-red-500/10 rounded-xl group-hover:bg-red-500/20 transition-colors border border-red-500/10">
-                  <LogOut className="w-5 h-5 text-red-500" strokeWidth={1.5} />
+                <div className="rounded-xl border border-red-500/10 bg-red-500/10 p-2.5 transition-colors group-hover:bg-red-500/20">
+                  <LogOut className="h-5 w-5 text-red-500" strokeWidth={1.5} />
                 </div>
                 <div className="text-right">
-                  <span className="block text-red-400 font-bold text-sm">تسجيل الخروج</span>
-                  <span className="block text-gray-600 text-[10px]">الخروج من الحساب الحالي</span>
+                  <span className="block text-sm font-bold text-red-400">تسجيل الخروج</span>
+                  <span className="block text-[10px] text-gray-600">الخروج من الحساب الحالي</span>
                 </div>
               </div>
             </button>
           </section>
-
         </div>
       </div>
     </div>

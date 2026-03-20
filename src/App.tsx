@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback, Suspense, lazy, useMemo, type ChangeEvent, type FC } from 'react';
-import { CONTACT_INFO, QURAN_VERSE, BACKGROUND_LOGO_URL } from './constants';
+﻿import { useState, useEffect, useRef, useCallback, Suspense, lazy, useMemo, useDeferredValue, type ChangeEvent, type FC } from 'react';
+import { CONTACT_INFO, QURAN_VERSE, BACKGROUND_LOGO_URL, DEFAULT_BACKGROUND_PATTERN_URL } from './constants';
 import { Product, ViewState, GoldPrice, AppPreferences, PricingSettings } from './types/types';
 import { toggleFavorite, getAppPreferences, saveAppPreferences, getFavorites  } from './services/storage';
 import { api } from './services/api';
@@ -44,6 +44,12 @@ const ComponentLoader = () => (
   </div>
 );
 
+const HOME_TRUST_BADGES = [
+  { icon: ShieldCheck, text: 'ضمان العيار' },
+  { icon: Gem, text: 'أصالة و جودة' },
+  { icon: Award, text: 'دقة في الوزن' }
+] as const;
+
 const App: FC = () => {
   // ==========================================
   // 🔒 Security & Auth States
@@ -77,12 +83,13 @@ const App: FC = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const deferredSearchTerm = useDeferredValue(searchTerm.trim().toLowerCase());
   const [currentPrices, setCurrentPrices] = useState<GoldPrice[]>([]);
   const [liveOunceUsd, setLiveOunceUsd] = useState<number | null>(null);
   const [pricingSettings, setPricingSettings] = useState<PricingSettings>(DEFAULT_PRICING_SETTINGS);
 
   const [preferences, setPreferences] = useState<AppPreferences>({
-    backgroundPattern: 'https://www.transparenttextures.com/patterns/arabesque.png',
+    backgroundPattern: DEFAULT_BACKGROUND_PATTERN_URL,
     backgroundOpacity: 0.03
   });
 
@@ -131,22 +138,19 @@ const App: FC = () => {
   const fetchInitialData = useCallback(async () => {
     try {
       setLoadingError('');
-      const loadedPrefs = await getAppPreferences();
+      const [loadedPrefs, fetchedPrices, fetchedProducts, fetchedOunceUsd, fetchedPricingSettings] = await Promise.all([
+        getAppPreferences(),
+        fetchWithTimeout(api.getPrices()),
+        fetchWithTimeout(api.getProducts(0, ITEMS_PER_PAGE)),
+        fetchWithTimeout(api.getLatestOuncePriceUsd()),
+        fetchWithTimeout(api.getPricingSettings())
+      ]);
+
       setPreferences(loadedPrefs);
       setBgState({
         layers: [loadedPrefs.backgroundPattern, loadedPrefs.backgroundPattern],
         activeIdx: 0
       });
-
-      const minWaitPromise = new Promise(resolve => setTimeout(resolve, 1500));
-      const [fetchedPrices, fetchedProducts, fetchedOunceUsd, fetchedPricingSettings] = await Promise.all([
-        fetchWithTimeout(api.getPrices()),
-        fetchWithTimeout(api.getProducts(0, ITEMS_PER_PAGE)),
-        fetchWithTimeout(api.getLatestOuncePriceUsd()),
-        fetchWithTimeout(api.getPricingSettings()),
-        minWaitPromise
-      ]);
-
       setCurrentPrices(fetchedPrices);
       setLiveOunceUsd(fetchedOunceUsd);
       setPricingSettings(fetchedPricingSettings ?? DEFAULT_PRICING_SETTINGS);
@@ -222,8 +226,9 @@ const App: FC = () => {
   }, [checkUserRole, success]);
 
   useEffect(() => {
-    fetchInitialData();
-  }, [fetchInitialData]);
+    if (isGlobalLoading) return;
+    void fetchInitialData();
+  }, [isGlobalLoading, fetchInitialData]);
 
   useEffect(() => {
     if (!session || !pendingProtectedAction) return;
@@ -310,18 +315,36 @@ const App: FC = () => {
   // ==========================================
   useEffect(() => {
     const currentActivePattern = bgState.layers[bgState.activeIdx];
-    if (preferences.backgroundPattern !== currentActivePattern) {
-      const img = new Image();
-      img.src = preferences.backgroundPattern;
-      img.onload = () => {
-        setBgState(prev => {
-          const nextIdx = prev.activeIdx === 0 ? 1 : 0;
-          const newLayers = [...prev.layers];
-          newLayers[nextIdx] = preferences.backgroundPattern;
-          return { layers: newLayers, activeIdx: nextIdx };
-        });
-      };
+    if (preferences.backgroundPattern === currentActivePattern) {
+      return;
     }
+
+    const nextIdx = bgState.activeIdx === 0 ? 1 : 0;
+    if (!preferences.backgroundPattern) {
+      setBgState(prev => {
+        const newLayers = [...prev.layers];
+        newLayers[nextIdx] = '';
+        return { layers: newLayers, activeIdx: nextIdx };
+      });
+      return;
+    }
+
+    let isCancelled = false;
+    const img = new Image();
+    img.src = preferences.backgroundPattern;
+    img.onload = () => {
+      if (isCancelled) return;
+
+      setBgState(prev => {
+        const newLayers = [...prev.layers];
+        newLayers[nextIdx] = preferences.backgroundPattern;
+        return { layers: newLayers, activeIdx: nextIdx };
+      });
+    };
+
+    return () => {
+      isCancelled = true;
+    };
   }, [preferences.backgroundPattern, bgState.layers, bgState.activeIdx]);
 
   // ==========================================
@@ -412,7 +435,7 @@ const App: FC = () => {
         fetchWithTimeout(api.getPrices()),
         fetchWithTimeout(api.getProducts(0, ITEMS_PER_PAGE)),
         fetchWithTimeout(api.getLatestOuncePriceUsd()),
-        fetchWithTimeout(api.getPricingSettings())
+        fetchWithTimeout(api.getPricingSettings()),
       ]);
       setCurrentPrices(updatedPrices);
       setLiveOunceUsd(updatedOunceUsd);
@@ -445,14 +468,23 @@ const App: FC = () => {
   // 📋 Filtered Products
   // ==========================================
   const filteredProducts = useMemo(() => {
-    return products.filter(p => {
-      const matchesSearch = 
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchTerm.toLowerCase());
-      if (activeTab === 'favorites') return favorites.includes(p.id) && matchesSearch;
-      return matchesSearch;
+    const favoriteIds = new Set(favorites);
+    const baseProducts =
+      activeTab === 'favorites'
+        ? products.filter((product) => favoriteIds.has(product.id))
+        : products;
+
+    if (!deferredSearchTerm) {
+      return baseProducts;
+    }
+
+    return baseProducts.filter((product) => {
+      const haystack = `${product.name} ${product.description}`.toLowerCase();
+      return haystack.includes(deferredSearchTerm);
     });
-  }, [products, searchTerm, activeTab, favorites]);
+  }, [products, deferredSearchTerm, activeTab, favorites]);
+
+  const isHomeTab = activeTab === 'home';
 
   // ==========================================
   // 🛑 Render Checkpoints
@@ -540,26 +572,28 @@ const App: FC = () => {
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/50 z-10" />
-          {bgState.layers.map((patternUrl, index) => (
-            <div
-              key={index}
-              className="absolute inset-0 z-20 bg-repeat transition-opacity duration-[2000ms]"
-              style={{
-                backgroundImage: `url('${patternUrl}')`,
-                opacity: bgState.activeIdx === index ? preferences.backgroundOpacity : 0,
-                filter: 'invert(1) contrast(0.7)'
-              }}
-            />
-          ))}
+          {bgState.layers.map((patternUrl, index) =>
+            patternUrl ? (
+              <div
+                key={index}
+                className="absolute inset-0 z-20 bg-repeat transition-opacity duration-[2000ms]"
+                style={{
+                  backgroundImage: `url('${patternUrl}')`,
+                  backgroundSize: '140px',
+                  opacity: bgState.activeIdx === index ? preferences.backgroundOpacity : 0
+                }}
+              />
+            ) : null
+          )}
         </div>
 
         <div className="relative z-10">
           {/* Header */}
-          <header className="relative pt-8 pb-10 px-6 text-center">
-            <div className="flex justify-between items-start mb-6">
+          <header className={`relative px-6 text-center ${isHomeTab ? 'pt-5 pb-6' : 'pt-8 pb-10'}`}>
+            <div className={`flex justify-between items-start ${isHomeTab ? 'mb-4' : 'mb-6'}`}>
               <button 
                 onClick={() => setIsSettingsOpen(true)} 
-                className="p-3 text-gold-600/30 hover:text-gold-400 transition-colors duration-500 rounded-full hover:bg-gold-500/10"
+                className={`text-gold-600/30 hover:text-gold-400 transition-colors duration-500 rounded-full hover:bg-gold-500/10 ${isHomeTab ? 'p-2.5' : 'p-3'}`}
                 aria-label="الإعدادات"
                 title="الإعدادات"
               >
@@ -568,7 +602,7 @@ const App: FC = () => {
               
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-gold-600 via-gold-400 to-gold-600 rounded-full blur opacity-20 group-hover:opacity-60 transition duration-1000 group-hover:duration-200 animate-pulse-slow" />
-                <div className="relative w-16 h-16 bg-gradient-to-br from-[#1a1a1a] to-black rounded-full border border-gold-500/30 p-3 shadow-2xl flex items-center justify-center overflow-hidden">
+                <div className={`relative bg-gradient-to-br from-[#1a1a1a] to-black rounded-full border border-gold-500/30 shadow-2xl flex items-center justify-center overflow-hidden ${isHomeTab ? 'w-14 h-14 p-2.5' : 'w-16 h-16 p-3'}`}>
                   <div className="absolute inset-0 bg-gradient-to-tr from-gold-500/10 to-transparent" />
                   <img 
                     src={BACKGROUND_LOGO_URL} 
@@ -579,38 +613,34 @@ const App: FC = () => {
               </div>
             </div>
             
-            <div className="flex flex-col items-center justify-center animate-slide-up space-y-2">
-              <h1 className="font-serif text-6xl md:text-8xl mb-2 tracking-wide drop-shadow-2xl relative">
+            <div className={`flex flex-col items-center justify-center animate-slide-up ${isHomeTab ? 'space-y-1.5' : 'space-y-2'}`}>
+              <h1 className={`font-serif tracking-wide drop-shadow-2xl relative ${isHomeTab ? 'text-5xl md:text-7xl mb-1' : 'text-6xl md:text-8xl mb-2'}`}>
                 <span className="bg-clip-text text-transparent bg-gradient-to-b from-[#FFF5D6] via-[#DCCB96] to-[#A88836] drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]">بابل</span>
               </h1>
-              <div className="flex items-center gap-4 text-gold-400/60 text-[10px] md:text-xs tracking-[0.5em] uppercase font-serif">
-                <span className="w-8 h-[1px] bg-gradient-to-r from-transparent to-gold-500/50" />
+              <div className={`flex items-center uppercase font-serif text-gold-400/60 ${isHomeTab ? 'gap-3 text-[9px] md:text-[11px] tracking-[0.35em]' : 'gap-4 text-[10px] md:text-xs tracking-[0.5em]'}`}>
+                <span className={`${isHomeTab ? 'w-6' : 'w-8'} h-[1px] bg-gradient-to-r from-transparent to-gold-500/50`} />
                 <span className="text-gold-200 font-light">للمجوهرات الملكية</span>
-                <span className="w-8 h-[1px] bg-gradient-to-l from-transparent to-gold-500/50" />
+                <span className={`${isHomeTab ? 'w-6' : 'w-8'} h-[1px] bg-gradient-to-l from-transparent to-gold-500/50`} />
               </div>
-              <div className="mt-6 flex flex-wrap justify-center gap-3 animate-slide-up anim-delay-150">
-                {[
-                  { icon: ShieldCheck, text: 'ضمان العيار' },
-                  { icon: Gem, text: 'أصالة و جودة' },
-                  { icon: Award, text: 'دقة في الوزن' }
-                ].map((item, idx) => (
+              <div className={`flex flex-wrap justify-center animate-slide-up anim-delay-150 ${isHomeTab ? 'mt-4 gap-2' : 'mt-6 gap-3'}`}>
+                {HOME_TRUST_BADGES.map((item, idx) => (
                   <div 
                     key={idx}
-                    className="px-3 py-1.5 rounded-full bg-gold-900/20 border border-gold-500/20 backdrop-blur-sm flex items-center gap-2 shadow-lg shadow-black/20"
+                    className={`rounded-full bg-gold-900/20 border border-gold-500/20 backdrop-blur-sm flex items-center shadow-lg shadow-black/20 ${isHomeTab ? 'px-2.5 py-1 gap-1.5' : 'px-3 py-1.5 gap-2'}`}
                   >
                     <item.icon className="w-3 h-3 text-gold-400" />
-                    <span className="text-[10px] text-gold-200 font-bold tracking-wide">{item.text}</span>
+                    <span className={`${isHomeTab ? 'text-[9px]' : 'text-[10px]'} text-gold-200 font-bold tracking-wide`}>{item.text}</span>
                   </div>
                 ))}
               </div>
             </div>
             
-            <div className="mt-8 animate-slide-up relative px-4 anim-delay-300">
+            <div className={`animate-slide-up relative px-4 anim-delay-300 ${isHomeTab ? 'mt-5' : 'mt-8'}`}>
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3">
-                <Sparkles className="w-4 h-4 text-gold-600/30" />
+                <Sparkles className={`${isHomeTab ? 'w-3.5 h-3.5' : 'w-4 h-4'} text-gold-600/30`} />
               </div>
-              <div className="relative py-4 border-t border-b border-gold-500/10 bg-gradient-to-r from-transparent via-gold-900/5 to-transparent">
-                <p className="text-center font-serif text-lg md:text-xl leading-9 max-w-2xl mx-auto text-gold-100/90 drop-shadow-md px-2">
+              <div className={`relative border-t border-b border-gold-500/10 bg-gradient-to-r from-transparent via-gold-900/5 to-transparent ${isHomeTab ? 'py-3' : 'py-4'}`}>
+                <p className={`text-center font-serif max-w-2xl mx-auto text-gold-100/90 drop-shadow-md px-2 ${isHomeTab ? 'text-base md:text-lg leading-8' : 'text-lg md:text-xl leading-9'}`}>
                   {QURAN_VERSE}
                 </p>
               </div>
@@ -861,3 +891,4 @@ const App: FC = () => {
 };
 
 export default App;
+

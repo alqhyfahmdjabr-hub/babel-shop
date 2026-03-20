@@ -113,7 +113,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
                     {product.category === 'ring' ? 'خواتم' :
                       product.category === 'set' ? 'طقم كامل' :
                         product.category === 'bracelet' ? 'سوار' :
-                          product.category === 'earring' ? 'أقراط' : 'عقد'}
+                          product.category === 'earring' ? 'أقراط' :
+                            product.category === 'necklace' ? 'عقد' : product.category}
                   </span>
                 </div>
               </div>

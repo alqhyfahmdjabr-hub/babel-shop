@@ -1,6 +1,6 @@
 import { Preferences } from '@capacitor/preferences';
 import { ClientRequest, AppPreferences } from '../types/types';
-import { PATTERNS } from '../constants';
+import { DEFAULT_BACKGROUND_PATTERN_URL } from '../constants';
 
 const STORAGE_KEYS = {
   FAVORITES: 'favorites',
@@ -107,7 +107,7 @@ export const clearRequests = async (): Promise<void> => {
 // --- App Preferences ---
 
 const DEFAULT_PREFERENCES: AppPreferences = {
-  backgroundPattern: PATTERNS[0].url,
+  backgroundPattern: DEFAULT_BACKGROUND_PATTERN_URL,
   backgroundOpacity: 0.03
 };
 

@@ -2,6 +2,8 @@ import { defineConfig, type PluginOption } from 'vite';
 import react from '@vitejs/plugin-react';
 import  visualizerModule from 'vite-bundle-visualizer';
 import { resolve } from 'path';
+import tailwindcss from 'tailwindcss';
+import autoprefixer from 'autoprefixer';
 
 const visualizer = visualizerModule as unknown as (options: Record<string, unknown>) => PluginOption;
 // https://vitejs.dev/config/
@@ -100,7 +102,7 @@ export default defineConfig(({ mode }) => {
     css: {
       devSourcemap: true,
       postcss: {
-        plugins: [],
+        plugins: [tailwindcss(), autoprefixer()],
       },
     },
 

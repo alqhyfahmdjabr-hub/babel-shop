@@ -14,7 +14,11 @@
     "type-check": "tsc --noEmit",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
-    "analyze": "set ANALYZE=true&& vite"
+    "analyze": "set ANALYZE=true&& vite",
+    "appium:driver:install": "appium driver install uiautomator2",
+    "appium:server": "appium --port 4723 --base-path /",
+    "e2e:android:smoke": "node e2e/appium/smoke.mjs",
+    "e2e:android:smoke:win": "powershell -ExecutionPolicy Bypass -File e2e/appium/run-smoke.ps1"
   },
   "dependencies": {
     "@capacitor/android": "^6.1.2",
@@ -45,6 +49,8 @@
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "@typescript-eslint/parser": "^7.15.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "appium": "^3.2.2",
+    "appium-uiautomator2-driver": "^7.0.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
@@ -59,7 +65,8 @@
     "typescript": "^5.2.2",
     "vite": "^5.3.4",
     "vite-bundle-visualizer": "^1.2.1",
-    "vitest": "^2.1.1"
+    "vitest": "^2.1.1",
+    "webdriverio": "^9.26.1"
   },
   "browserslist": {
     "production": [

@@ -7,6 +7,7 @@ import {
   convertUsdToSar,
   USD_TO_SAR
 } from '../utils/goldCalculator';
+import { ensureDisplaySpread } from '../utils/displayPricing';
 
 interface GoldTickerProps {
   prices: GoldPrice[];
@@ -70,8 +71,9 @@ const PriceCard: React.FC<{ price: DisplayPrice; exchangeRate: number }> = ({ pr
     const realChanged =
       price.buyUsd !== lastRealBuyRef.current || price.sellUsd !== lastRealSellRef.current;
 
-    setDisplayBuySar(buySar);
-    setDisplaySellSar(sellSar);
+    const nextDisplay = ensureDisplaySpread(buySar, sellSar);
+    setDisplayBuySar(nextDisplay.buy);
+    setDisplaySellSar(nextDisplay.sell);
 
     if (realChanged) {
       setIsLockedToReal(true);
@@ -91,8 +93,12 @@ const PriceCard: React.FC<{ price: DisplayPrice; exchangeRate: number }> = ({ pr
     let jitterTimer: number | null = null;
     const scheduleJitter = () => {
       jitterTimer = window.setTimeout(() => {
-        setDisplayBuySar(visualNudge(buySar, 0.001));
-        setDisplaySellSar(visualNudge(sellSar, 0.001));
+        const nextDisplay = ensureDisplaySpread(
+          visualNudge(buySar, 0.001),
+          visualNudge(sellSar, 0.001)
+        );
+        setDisplayBuySar(nextDisplay.buy);
+        setDisplaySellSar(nextDisplay.sell);
         scheduleJitter();
       }, 2000 + Math.random() * 2000);
     };

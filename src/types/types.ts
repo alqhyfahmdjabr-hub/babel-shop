@@ -64,6 +64,8 @@ export interface Pattern {
   id: string;
   name: string;
   url: string;
+  description?: string;
+  recommended?: boolean;
 }
 
 // View State Types

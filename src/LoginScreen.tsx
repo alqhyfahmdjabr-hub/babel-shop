@@ -1,13 +1,26 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase-client';
 import { Lock, Mail, Loader2, User, ArrowRight, AlertCircle, CheckCircle, Clock } from 'lucide-react';
-import zxcvbn from 'zxcvbn';
 
 const OTP_SENT_MESSAGE =
   'تم إرسال رمز التحقق إلى بريدك الإلكتروني. الرجاء إدخال الرمز المكون من 6 أرقام.';
 
 const isUnverifiedError = (msg: string) =>
   /email.*not.*confirm|not confirmed|email_not_confirmed|unverified/i.test(msg);
+
+type PasswordAnalyzer = (password: string, userInputs?: string[]) => { score: number };
+
+let passwordAnalyzerPromise: Promise<PasswordAnalyzer> | null = null;
+
+const loadPasswordAnalyzer = () => {
+  if (!passwordAnalyzerPromise) {
+    passwordAnalyzerPromise = import('zxcvbn').then((module) =>
+      ('default' in module ? module.default : module) as PasswordAnalyzer
+    );
+  }
+
+  return passwordAnalyzerPromise;
+};
 
 export default function LoginScreen() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -55,14 +68,24 @@ export default function LoginScreen() {
   }, [failedAttempts]);
 
   useEffect(() => {
-    if (!password) {
+    let isCancelled = false;
+
+    if (!isSignUp || !password) {
       setPasswordStrength('');
       return;
     }
 
-    const result = zxcvbn(password);
+    void loadPasswordAnalyzer().then((analyzer) => {
+      if (isCancelled) return;
+
+      const result = analyzer(password);
     setPasswordStrength(result.score < 3 ? 'ضعيفة' : 'قوية');
-  }, [password]);
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isSignUp, password]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -91,7 +114,8 @@ export default function LoginScreen() {
     }
 
     if (isSignUp) {
-      const result = zxcvbn(password);
+      const analyzer = await loadPasswordAnalyzer();
+      const result = analyzer(password);
       if (result.score < 3) {
         setError('كلمة المرور ضعيفة جداً. استخدم حروفاً كبيرة وصغيرة وأرقاماً ورموزاً.');
         return;

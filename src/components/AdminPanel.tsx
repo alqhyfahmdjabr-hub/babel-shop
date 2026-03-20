@@ -77,6 +77,25 @@ const parseExchangeRateInput = (value: string): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+const PRODUCT_CATEGORY_OPTIONS = [
+  { value: 'ring', label: 'خاتم' },
+  { value: 'set', label: 'طقم' },
+  { value: 'necklace', label: 'عقد' },
+  { value: 'bracelet', label: 'سوار' },
+  { value: 'earring', label: 'أقراط' }
+] as const;
+
+const PRODUCT_CATEGORY_INPUT_REGEX = /^[A-Za-z\u0621-\u063A\u0641-\u064A]+(?:\s[A-Za-z\u0621-\u063A\u0641-\u064A]+)*$/;
+
+const sanitizeProductCategoryInput = (value: string): string =>
+  value
+    .replace(/[^A-Za-z\u0621-\u063A\u0641-\u064A\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trimStart();
+
+const isPresetProductCategory = (value: string): boolean =>
+  PRODUCT_CATEGORY_OPTIONS.some((option) => option.value === value);
+
 export const AdminPanel: React.FC<AdminPanelProps> = ({
   prices,
   products,
@@ -238,10 +257,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     e.preventDefault();
     if (!showProductForm) return;
 
+    const categoryValue = isPresetProductCategory(showProductForm.category)
+      ? showProductForm.category
+      : sanitizeProductCategoryInput(showProductForm.category).trim();
+
+    if (!categoryValue) {
+      alert('يرجى اختيار الفئة أو إدخالها يدويًا');
+      return;
+    }
+
+    if (!isPresetProductCategory(categoryValue) && !PRODUCT_CATEGORY_INPUT_REGEX.test(categoryValue)) {
+      alert('الفئة يجب أن تحتوي على حروف عربية أو إنجليزية فقط');
+      return;
+    }
+
     setIsSaving(true);
     try {
       await api.saveProduct({
         ...showProductForm,
+        category: categoryValue,
         id: showProductForm.id || crypto.randomUUID()
       });
       onUpdateProducts();
@@ -555,9 +589,46 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <select className="w-full bg-black border border-gray-700 rounded-lg p-3" title="العيار" aria-label="العيار" value={showProductForm.karat} onChange={(e) => setShowProductForm({ ...showProductForm, karat: Number(e.target.value) as 18 | 21 | 24 })}>
               <option value={18}>18</option><option value={21}>21</option><option value={24}>24</option>
             </select>
-            <select className="w-full bg-black border border-gray-700 rounded-lg p-3" title="الفئة" aria-label="الفئة" value={showProductForm.category} onChange={(e) => setShowProductForm({ ...showProductForm, category: e.target.value })}>
-              <option value="ring">خاتم</option><option value="set">طقم</option><option value="necklace">عقد</option><option value="bracelet">سوار</option><option value="earring">أقراط</option>
+            <select
+              className="w-full bg-black border border-gray-700 rounded-lg p-3"
+              title="الفئة"
+              aria-label="الفئة"
+              value={isPresetProductCategory(showProductForm.category) ? showProductForm.category : 'custom'}
+              onChange={(e) => {
+                const nextValue = e.target.value;
+                setShowProductForm({
+                  ...showProductForm,
+                  category:
+                    nextValue === 'custom'
+                      ? (isPresetProductCategory(showProductForm.category) ? '' : showProductForm.category)
+                      : nextValue
+                });
+              }}
+            >
+              {PRODUCT_CATEGORY_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+              <option value="custom">إدخال يدوي</option>
             </select>
+            {!isPresetProductCategory(showProductForm.category) && (
+              <input
+                className="w-full bg-black border border-gray-700 rounded-lg p-3"
+                title="الفئة"
+                aria-label="الفئة"
+                value={showProductForm.category}
+                onChange={(e) =>
+                  setShowProductForm({
+                    ...showProductForm,
+                    category: sanitizeProductCategoryInput(e.target.value)
+                  })
+                }
+                placeholder="الفئة"
+                autoComplete="off"
+                required
+              />
+            )}
             <textarea rows={3} className="w-full bg-black border border-gray-700 rounded-lg p-3" value={showProductForm.description} onChange={(e) => setShowProductForm({ ...showProductForm, description: e.target.value })} placeholder="وصف المنتج" />
             <button type="submit" disabled={isSaving} className="w-full py-3 rounded-xl bg-gold-600 text-black font-bold"><Save className="w-4 h-4 inline ml-1" />{isSaving ? 'جاري الحفظ...' : 'حفظ المنتج'}</button>
           </form>
