@@ -56,10 +56,10 @@ const normalizeDigitsToEnglish = (value: string): string =>
     })
     .join('');
 
-const sanitizeExchangeRateInput = (value: string): string =>
+const sanitizeNumericInput = (value: string): string =>
   value.replace(/[^0-9\u0660-\u0669\u06f0-\u06f9.,\u066b\u066c]/g, '');
 
-const parseExchangeRateInput = (value: string): number | null => {
+const parseNumericInput = (value: string): number | null => {
   const normalizedDigits = normalizeDigitsToEnglish(value.trim());
   const withDotSeparator = normalizedDigits.replace(/[\u066b\u066c]/g, '.').replace(/,/g, '.');
   const cleaned = withDotSeparator.replace(/[^0-9.]/g, '');
@@ -96,6 +96,13 @@ const sanitizeProductCategoryInput = (value: string): string =>
 const isPresetProductCategory = (value: string): boolean =>
   PRODUCT_CATEGORY_OPTIONS.some((option) => option.value === value);
 
+const formatUsd = (value: number) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 2
+  }).format(value);
+
 export const AdminPanel: React.FC<AdminPanelProps> = ({
   prices,
   products,
@@ -108,16 +115,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'prices' | 'products' | 'orders' | 'inspirations'>('prices');
-
-  const [editingPrices, setEditingPrices] = useState<GoldPrice[]>(
-    JSON.parse(JSON.stringify(prices))
-  );
-  const [editingPricingSettings, setEditingPricingSettings] = useState<PricingSettings>({
-    ...pricingSettings
-  });
-  const [exchangeRateInput, setExchangeRateInput] = useState<string>(
-    String(pricingSettings.exchangeRate ?? '')
-  );
+  const [exchangeRateInput, setExchangeRateInput] = useState<string>(String(pricingSettings.exchangeRate ?? ''));
+  const [buyMarginInput, setBuyMarginInput] = useState<string>(String(pricingSettings.buyMarginPercent ?? ''));
+  const [sellMarginInput, setSellMarginInput] = useState<string>(String(pricingSettings.sellMarginPercent ?? ''));
   const [isSavingPricingSettings, setIsSavingPricingSettings] = useState(false);
   const [showProductForm, setShowProductForm] = useState<Product | null>(null);
   const [orders, setOrders] = useState<ClientRequest[]>([]);
@@ -144,6 +144,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         setIsLoadingAuth(false);
       }
     };
+
     void checkRole();
   }, []);
 
@@ -153,8 +154,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   }, [activeTab]);
 
   useEffect(() => {
-    setEditingPricingSettings({ ...pricingSettings });
     setExchangeRateInput(String(pricingSettings.exchangeRate ?? ''));
+    setBuyMarginInput(String(pricingSettings.buyMarginPercent ?? ''));
+    setSellMarginInput(String(pricingSettings.sellMarginPercent ?? ''));
   }, [pricingSettings]);
 
   const fetchOrders = async () => {
@@ -191,39 +193,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     window.location.reload();
   };
 
-  const handleSavePrices = async () => {
-    setIsSaving(true);
-    try {
-      await api.updatePrices(editingPrices);
-      onUpdatePrices();
-      alert('تم حفظ الأسعار بنجاح');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'خطأ غير معروف';
-      alert(`فشل حفظ الأسعار: ${message}`);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const handleSavePricingSettings = async () => {
-    const parsedExchangeRate = parseExchangeRateInput(exchangeRateInput);
+    const parsedExchangeRate = parseNumericInput(exchangeRateInput);
     if (parsedExchangeRate === null || parsedExchangeRate <= 0) {
       alert('يرجى إدخال سعر صرف صحيح أكبر من صفر');
       return;
     }
-    const safeExchangeRate = parsedExchangeRate;
+
+    const parsedBuyMargin = parseNumericInput(buyMarginInput);
+    if (parsedBuyMargin === null || parsedBuyMargin < 0 || parsedBuyMargin >= 100) {
+      alert('يرجى إدخال هامش شراء صحيح من 0 إلى أقل من 100');
+      return;
+    }
+
+    const parsedSellMargin = parseNumericInput(sellMarginInput);
+    if (parsedSellMargin === null || parsedSellMargin < 0 || parsedSellMargin >= 100) {
+      alert('يرجى إدخال هامش بيع صحيح من 0 إلى أقل من 100');
+      return;
+    }
 
     setIsSavingPricingSettings(true);
     try {
       await api.updatePricingSettings({
-        exchangeRate: safeExchangeRate,
-        calcMethod: editingPricingSettings.calcMethod
+        exchangeRate: parsedExchangeRate,
+        buyMarginPercent: parsedBuyMargin,
+        sellMarginPercent: parsedSellMargin
       });
-      setEditingPricingSettings((prev) => ({
-        ...prev,
-        exchangeRate: safeExchangeRate
-      }));
-      setExchangeRateInput(String(safeExchangeRate));
+      setExchangeRateInput(String(parsedExchangeRate));
+      setBuyMarginInput(String(parsedBuyMargin));
+      setSellMarginInput(String(parsedSellMargin));
       onUpdatePrices();
       alert('تم حفظ إعدادات التسعير بنجاح');
     } catch (error) {
@@ -316,11 +314,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleInspirationImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     if (!file) return;
+
     const validation = imageService.validateImage(file);
     if (!validation.valid) {
       alert(validation.error || 'ملف الصورة غير صالح');
       return;
     }
+
     setInspirationForm((prev) => ({ ...prev, imageFile: file }));
   };
 
@@ -394,101 +394,141 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       <div className="p-4 border-b border-white/10 flex items-center justify-between">
         <h2 className="text-gold-400 font-bold text-xl">لوحة الإدارة</h2>
         <div className="flex items-center gap-2">
-          <button onClick={handleLogout} className="px-3 py-1.5 rounded-lg bg-red-900/20 text-red-400 text-xs flex items-center gap-1"><LogOut className="w-3 h-3" />خروج</button>
-          <button type="button" onClick={onClose} className="p-2 text-gray-400" aria-label="إغلاق" title="إغلاق"><X className="w-5 h-5" /></button>
+          <button onClick={handleLogout} className="px-3 py-1.5 rounded-lg bg-red-900/20 text-red-400 text-xs flex items-center gap-1">
+            <LogOut className="w-3 h-3" />
+            خروج
+          </button>
+          <button type="button" onClick={onClose} className="p-2 text-gray-400" aria-label="إغلاق" title="إغلاق">
+            <X className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
       <div className="flex border-b border-white/10 overflow-x-auto">
-        <button onClick={() => setActiveTab('prices')} className={`px-4 py-3 text-sm ${activeTab === 'prices' ? 'text-gold-400 border-b-2 border-gold-400' : 'text-gray-500'}`}><TrendingUp className="w-4 h-4 inline ml-1" />الأسعار</button>
-        <button onClick={() => setActiveTab('products')} className={`px-4 py-3 text-sm ${activeTab === 'products' ? 'text-gold-400 border-b-2 border-gold-400' : 'text-gray-500'}`}><Package className="w-4 h-4 inline ml-1" />المنتجات</button>
-        <button onClick={() => setActiveTab('orders')} className={`px-4 py-3 text-sm ${activeTab === 'orders' ? 'text-gold-400 border-b-2 border-gold-400' : 'text-gray-500'}`}><ClipboardList className="w-4 h-4 inline ml-1" />الطلبات</button>
-        <button onClick={() => setActiveTab('inspirations')} className={`px-4 py-3 text-sm ${activeTab === 'inspirations' ? 'text-gold-400 border-b-2 border-gold-400' : 'text-gray-500'}`}><ImageIcon className="w-4 h-4 inline ml-1" />الإلهام</button>
+        <button onClick={() => setActiveTab('prices')} className={`px-4 py-3 text-sm ${activeTab === 'prices' ? 'text-gold-400 border-b-2 border-gold-400' : 'text-gray-500'}`}>
+          <TrendingUp className="w-4 h-4 inline ml-1" />
+          الأسعار
+        </button>
+        <button onClick={() => setActiveTab('products')} className={`px-4 py-3 text-sm ${activeTab === 'products' ? 'text-gold-400 border-b-2 border-gold-400' : 'text-gray-500'}`}>
+          <Package className="w-4 h-4 inline ml-1" />
+          المنتجات
+        </button>
+        <button onClick={() => setActiveTab('orders')} className={`px-4 py-3 text-sm ${activeTab === 'orders' ? 'text-gold-400 border-b-2 border-gold-400' : 'text-gray-500'}`}>
+          <ClipboardList className="w-4 h-4 inline ml-1" />
+          الطلبات
+        </button>
+        <button onClick={() => setActiveTab('inspirations')} className={`px-4 py-3 text-sm ${activeTab === 'inspirations' ? 'text-gold-400 border-b-2 border-gold-400' : 'text-gray-500'}`}>
+          <ImageIcon className="w-4 h-4 inline ml-1" />
+          الإلهام
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
         {activeTab === 'prices' && (
-          <div className="max-w-lg mx-auto space-y-4">
-            <div className="bg-[#0f0f0f] border border-white/10 rounded-xl p-4 space-y-3">
-              <p className="text-gold-300 font-bold">{'\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u062a\u0633\u0639\u064a\u0631 \u0627\u0644\u0630\u0647\u0628'}</p>
+          <div className="max-w-2xl mx-auto space-y-4">
+            <div className="bg-[#0f0f0f] border border-white/10 rounded-xl p-4 space-y-4">
+              <div className="space-y-1">
+                <p className="text-gold-300 font-bold">إعدادات التسعير المركزية</p>
+                <p className="text-xs text-gray-400 leading-6">
+                  يتم التعديل هنا مباشرة. بعد الحفظ تقوم قاعدة البيانات بإعادة احتساب جدول الأسعار تلقائيًا اعتمادًا على آخر أونصة محفوظة في السجل.
+                </p>
+              </div>
+
               <div>
-                <label className="block text-xs text-gray-400 mb-1" htmlFor="admin-exchange-rate">{'\u0633\u0639\u0631 \u0627\u0644\u0635\u0631\u0641 (USD \u0625\u0644\u0649 SAR)'}</label>
+                <label className="block text-xs text-gray-400 mb-1" htmlFor="admin-exchange-rate">سعر الصرف (USD إلى SAR)</label>
                 <input
                   id="admin-exchange-rate"
                   type="text"
                   inputMode="decimal"
                   className="w-full bg-black border border-gray-700 rounded-lg p-2"
                   value={exchangeRateInput}
-                  onChange={(e) => {
-                    setExchangeRateInput(sanitizeExchangeRateInput(e.target.value));
-                  }}
+                  onChange={(e) => setExchangeRateInput(sanitizeNumericInput(e.target.value))}
                 />
               </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1" htmlFor="admin-calc-method">{'\u0637\u0631\u064a\u0642\u0629 \u0627\u0644\u062d\u0633\u0627\u0628'}</label>
-                <select
-                  id="admin-calc-method"
-                  title="طريقة الحساب"
-                  aria-label="طريقة الحساب"
-                  className="w-full bg-black border border-gray-700 rounded-lg p-2"
-                  value={editingPricingSettings.calcMethod}
-                  onChange={(e) => {
-                    const calcMethod = e.target.value === 'from_ounce' ? 'from_ounce' : 'db_prices';
-                    setEditingPricingSettings((prev) => ({ ...prev, calcMethod }));
-                  }}
-                >
-                  <option value="db_prices">{'\u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u062c\u062f\u0648\u0644 \u0627\u0644\u062b\u0627\u0628\u062a\u0629'}</option>
-                  <option value="from_ounce">{'\u062d\u0633\u0627\u0628 \u0622\u0644\u064a \u0645\u0646 \u0627\u0644\u0623\u0648\u0646\u0635\u0629'}</option>
-                </select>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1" htmlFor="admin-buy-margin">هامش الشراء %</label>
+                  <input
+                    id="admin-buy-margin"
+                    type="text"
+                    inputMode="decimal"
+                    className="w-full bg-black border border-gray-700 rounded-lg p-2"
+                    value={buyMarginInput}
+                    onChange={(e) => setBuyMarginInput(sanitizeNumericInput(e.target.value))}
+                  />
+                  <p className="mt-1 text-[11px] text-gray-500">يُخصم من السعر الأساسي عند حساب سعر الشراء.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1" htmlFor="admin-sell-margin">هامش البيع %</label>
+                  <input
+                    id="admin-sell-margin"
+                    type="text"
+                    inputMode="decimal"
+                    className="w-full bg-black border border-gray-700 rounded-lg p-2"
+                    value={sellMarginInput}
+                    onChange={(e) => setSellMarginInput(sanitizeNumericInput(e.target.value))}
+                  />
+                  <p className="mt-1 text-[11px] text-gray-500">يُضاف إلى السعر الأساسي عند حساب سعر البيع.</p>
+                </div>
               </div>
+
               <button
                 onClick={handleSavePricingSettings}
                 disabled={isSavingPricingSettings}
                 className="w-full py-3 rounded-xl bg-gold-600 text-black font-bold"
               >
                 <Save className="w-4 h-4 inline ml-2" />
-                {isSavingPricingSettings ? '\u062c\u0627\u0631\u064a \u062d\u0641\u0638 \u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a...' : '\u062d\u0641\u0638 \u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u062a\u0633\u0639\u064a\u0631'}
+                {isSavingPricingSettings ? 'جاري حفظ الإعدادات...' : 'حفظ إعدادات التسعير'}
               </button>
             </div>
 
-            {editingPrices.map((p, i) => (
-              <div key={p.karat} className="bg-[#0f0f0f] border border-white/10 rounded-xl p-4">
-                <p className="text-gold-300 font-bold mb-2">عيار {p.karat}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="number"
-                    className="bg-black border border-gray-700 rounded-lg p-2"
-                    value={p.buy}
-                    aria-label={`سعر الشراء لعيار ${p.karat}`}
-                    title={`سعر الشراء لعيار ${p.karat}`}
-                    onChange={(e) => {
-                      const next = [...editingPrices];
-                      next[i] = { ...next[i], buy: Number(e.target.value) || 0 };
-                      setEditingPrices(next);
-                    }}
-                  />
-                  <input
-                    type="number"
-                    className="bg-black border border-gray-700 rounded-lg p-2"
-                    value={p.sell}
-                    aria-label={`سعر البيع لعيار ${p.karat}`}
-                    title={`سعر البيع لعيار ${p.karat}`}
-                    onChange={(e) => {
-                      const next = [...editingPrices];
-                      next[i] = { ...next[i], sell: Number(e.target.value) || 0 };
-                      setEditingPrices(next);
-                    }}
-                  />
-                </div>
+            <div className="bg-[#0f0f0f] border border-white/10 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-gold-300 font-bold">الأسعار الحالية من قاعدة البيانات</p>
+                <span className="text-[11px] text-gray-500">قراءة فقط</span>
               </div>
-            ))}
-            <button onClick={handleSavePrices} disabled={isSaving} className="w-full py-3 rounded-xl bg-gold-600 text-black font-bold"><Save className="w-4 h-4 inline ml-2" />{isSaving ? 'جاري الحفظ...' : 'حفظ الأسعار'}</button>
+              <div className="space-y-3">
+                {prices.map((price) => (
+                  <div key={price.karat} className="rounded-xl border border-white/10 bg-black/30 p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-bold text-gold-200">عيار {price.karat}</p>
+                      <span className="text-[11px] text-gray-500">
+                        الفارق: {formatUsd(Math.max(0, price.sell - price.buy))}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="rounded-lg border border-white/5 bg-[#111] p-3">
+                        <p className="text-gray-500 text-xs mb-1">شراء</p>
+                        <p className="text-gray-100 font-bold">{formatUsd(price.buy)}</p>
+                      </div>
+                      <div className="rounded-lg border border-gold-500/20 bg-[#161106] p-3">
+                        <p className="text-gray-500 text-xs mb-1">بيع</p>
+                        <p className="text-gold-200 font-bold">{formatUsd(price.sell)}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {prices.length === 0 && (
+                  <div className="rounded-xl border border-dashed border-gray-700 p-4 text-center text-sm text-gray-500">
+                    لا توجد أسعار متاحة حاليًا.
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
         {activeTab === 'products' && (
           <div className="max-w-lg mx-auto space-y-3">
-            <button onClick={() => setShowProductForm({ id: '', name: '', category: 'ring', weight: 0, priceEstimate: 0, imageUrl: '', description: '', karat: 21 })} className="w-full py-3 rounded-xl border border-gold-500/30 text-gold-300"><Plus className="w-4 h-4 inline ml-1" />إضافة منتج</button>
+            <button
+              onClick={() => setShowProductForm({ id: '', name: '', category: 'ring', weight: 0, priceEstimate: 0, imageUrl: '', description: '', karat: 21 })}
+              className="w-full py-3 rounded-xl border border-gold-500/30 text-gold-300"
+            >
+              <Plus className="w-4 h-4 inline ml-1" />
+              إضافة منتج
+            </button>
             {products.map((product) => (
               <div key={product.id} className="bg-[#0f0f0f] border border-white/10 rounded-xl p-3 flex gap-3">
                 <img src={product.imageUrl} alt={product.name} className="w-16 h-16 rounded-lg object-cover" />
@@ -496,8 +536,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <p className="font-bold">{product.name}</p>
                   <p className="text-xs text-gray-400">{product.weight} جرام - عيار {product.karat}</p>
                 </div>
-                <button type="button" onClick={() => setShowProductForm(product)} className="p-2 text-blue-400" aria-label="تعديل المنتج" title="تعديل المنتج"><Edit2 className="w-4 h-4" /></button>
-                <button type="button" onClick={() => void handleDeleteProduct(product.id)} className="p-2 text-red-400" aria-label="حذف المنتج" title="حذف المنتج"><Trash2 className="w-4 h-4" /></button>
+                <button type="button" onClick={() => setShowProductForm(product)} className="p-2 text-blue-400" aria-label="تعديل المنتج" title="تعديل المنتج">
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button type="button" onClick={() => void handleDeleteProduct(product.id)} className="p-2 text-red-400" aria-label="حذف المنتج" title="حذف المنتج">
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             ))}
           </div>
@@ -511,12 +555,28 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <img src={order.imageUrl} alt="Order" className="w-16 h-16 rounded-lg object-cover" />
                   <div className="flex-1">
                     <p className="font-bold text-gold-300">#{order.id.slice(0, 8)}</p>
-                    {order.profiles?.full_name && <p className="text-xs text-gold-100 flex items-center gap-1"><User className="w-3 h-3" />{order.profiles.full_name}</p>}
-                    <p className="text-xs text-gray-400 flex items-center gap-1"><Phone className="w-3 h-3" />{order.phone}</p>
-                    <p className="text-xs text-gray-400 flex items-center gap-1"><Ruler className="w-3 h-3" />{order.weight} جرام</p>
-                    <p className="text-xs text-gray-500 flex items-center gap-1"><Calendar className="w-3 h-3" />{order.date}</p>
+                    {order.profiles?.full_name && (
+                      <p className="text-xs text-gold-100 flex items-center gap-1">
+                        <User className="w-3 h-3" />
+                        {order.profiles.full_name}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-400 flex items-center gap-1">
+                      <Phone className="w-3 h-3" />
+                      {order.phone}
+                    </p>
+                    <p className="text-xs text-gray-400 flex items-center gap-1">
+                      <Ruler className="w-3 h-3" />
+                      {order.weight} جرام
+                    </p>
+                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {order.date}
+                    </p>
                   </div>
-                  <button type="button" onClick={() => void handleDeleteOrder(order.id)} className="p-2 text-red-400" aria-label="حذف الطلب" title="حذف الطلب"><Trash2 className="w-4 h-4" /></button>
+                  <button type="button" onClick={() => void handleDeleteOrder(order.id)} className="p-2 text-red-400" aria-label="حذف الطلب" title="حذف الطلب">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -526,9 +586,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         {activeTab === 'inspirations' && (
           <div className="max-w-lg mx-auto space-y-4">
             <form onSubmit={handleUploadInspiration} className="bg-[#0f0f0f] border border-white/10 rounded-xl p-4 space-y-3">
-              <input className="w-full bg-black border border-gray-700 rounded-lg p-2" placeholder="عنوان صورة الإلهام" value={inspirationForm.title} onChange={(e) => setInspirationForm((prev) => ({ ...prev, title: e.target.value }))} />
-              <select className="w-full bg-black border border-gray-700 rounded-lg p-2" title="نوع القطعة" aria-label="نوع القطعة" value={inspirationForm.piece_type} onChange={(e) => setInspirationForm((prev) => ({ ...prev, piece_type: e.target.value as InspirationFormState['piece_type'] }))}>
-                <option value="general">عام</option><option value="ring">خاتم</option><option value="necklace">عقد</option><option value="bracelet">سوار</option><option value="earring">أقراط</option>
+              <input
+                className="w-full bg-black border border-gray-700 rounded-lg p-2"
+                placeholder="عنوان صورة الإلهام"
+                value={inspirationForm.title}
+                onChange={(e) => setInspirationForm((prev) => ({ ...prev, title: e.target.value }))}
+              />
+              <select
+                className="w-full bg-black border border-gray-700 rounded-lg p-2"
+                title="نوع القطعة"
+                aria-label="نوع القطعة"
+                value={inspirationForm.piece_type}
+                onChange={(e) => setInspirationForm((prev) => ({ ...prev, piece_type: e.target.value as InspirationFormState['piece_type'] }))}
+              >
+                <option value="general">عام</option>
+                <option value="ring">خاتم</option>
+                <option value="necklace">عقد</option>
+                <option value="bracelet">سوار</option>
+                <option value="earring">أقراط</option>
               </select>
               <input
                 id="admin-inspiration-image"
@@ -540,7 +615,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 title="صورة الإلهام"
                 onChange={handleInspirationImage}
               />
-              <button type="button" onClick={() => inspirationImageInputRef.current?.click()} className="w-full py-2 rounded-lg border border-dashed border-gray-700"><Upload className="w-4 h-4 inline ml-1" />اختيار صورة</button>
+              <button type="button" onClick={() => inspirationImageInputRef.current?.click()} className="w-full py-2 rounded-lg border border-dashed border-gray-700">
+                <Upload className="w-4 h-4 inline ml-1" />
+                اختيار صورة
+              </button>
               {inspirationForm.imageFile && <p className="text-xs text-gray-400">{inspirationForm.imageFile.name}</p>}
               <button type="submit" disabled={isSaving} className="w-full py-2 rounded-lg bg-gold-600 text-black font-bold">رفع صورة إلهام</button>
             </form>
@@ -555,7 +633,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     <p className="font-bold">{item.title}</p>
                     <p className="text-xs text-gray-500">النوع: {item.piece_type}</p>
                   </div>
-                  <button type="button" onClick={() => void handleDeleteInspiration(item)} className="p-2 text-red-400" aria-label="حذف الإلهام" title="حذف الإلهام"><Trash2 className="w-4 h-4" /></button>
+                  <button type="button" onClick={() => void handleDeleteInspiration(item)} className="p-2 text-red-400" aria-label="حذف الإلهام" title="حذف الإلهام">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               ))
             )}
@@ -567,7 +647,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         <div className="fixed inset-0 z-[80] bg-black/95 flex flex-col">
           <div className="p-4 border-b border-white/10 flex items-center justify-between">
             <h3 className="font-bold text-lg">{showProductForm.id ? 'تعديل منتج' : 'إضافة منتج'}</h3>
-            <button type="button" onClick={() => setShowProductForm(null)} className="p-2 text-gray-400" aria-label="إغلاق" title="إغلاق"><X className="w-5 h-5" /></button>
+            <button type="button" onClick={() => setShowProductForm(null)} className="p-2 text-gray-400" aria-label="إغلاق" title="إغلاق">
+              <X className="w-5 h-5" />
+            </button>
           </div>
           <form onSubmit={handleSaveProduct} className="p-4 overflow-y-auto flex-1 space-y-3 max-w-lg mx-auto w-full">
             <input
@@ -581,13 +663,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               onChange={handleProductImage}
             />
             <button type="button" onClick={() => productImageInputRef.current?.click()} className="w-full py-3 rounded-xl border border-dashed border-gray-700">
-              <Upload className="w-4 h-4 inline ml-1" />اختيار صورة المنتج
+              <Upload className="w-4 h-4 inline ml-1" />
+              اختيار صورة المنتج
             </button>
             {showProductForm.imageUrl && <img src={showProductForm.imageUrl} alt="preview" className="w-full h-48 object-cover rounded-xl" />}
             <input className="w-full bg-black border border-gray-700 rounded-lg p-3" value={showProductForm.name} onChange={(e) => setShowProductForm({ ...showProductForm, name: e.target.value })} placeholder="اسم المنتج" required />
             <input type="number" step="0.01" className="w-full bg-black border border-gray-700 rounded-lg p-3" value={showProductForm.weight || ''} onChange={(e) => setShowProductForm({ ...showProductForm, weight: Number(e.target.value) || 0 })} placeholder="الوزن" required />
             <select className="w-full bg-black border border-gray-700 rounded-lg p-3" title="العيار" aria-label="العيار" value={showProductForm.karat} onChange={(e) => setShowProductForm({ ...showProductForm, karat: Number(e.target.value) as 18 | 21 | 24 })}>
-              <option value={18}>18</option><option value={21}>21</option><option value={24}>24</option>
+              <option value={18}>18</option>
+              <option value={21}>21</option>
+              <option value={24}>24</option>
             </select>
             <select
               className="w-full bg-black border border-gray-700 rounded-lg p-3"
@@ -630,7 +715,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               />
             )}
             <textarea rows={3} className="w-full bg-black border border-gray-700 rounded-lg p-3" value={showProductForm.description} onChange={(e) => setShowProductForm({ ...showProductForm, description: e.target.value })} placeholder="وصف المنتج" />
-            <button type="submit" disabled={isSaving} className="w-full py-3 rounded-xl bg-gold-600 text-black font-bold"><Save className="w-4 h-4 inline ml-1" />{isSaving ? 'جاري الحفظ...' : 'حفظ المنتج'}</button>
+            <button type="submit" disabled={isSaving} className="w-full py-3 rounded-xl bg-gold-600 text-black font-bold">
+              <Save className="w-4 h-4 inline ml-1" />
+              {isSaving ? 'جاري الحفظ...' : 'حفظ المنتج'}
+            </button>
           </form>
         </div>
       )}

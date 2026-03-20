@@ -294,21 +294,24 @@ export interface Database {
         Row: {
           id: number;
           exchange_rate: number | null;
-          calc_method: string | null;
+          buy_margin_percent: number | null;
+          sell_margin_percent: number | null;
           created_at: string | null;
           updated_at: string | null;
         };
         Insert: {
           id?: number;
           exchange_rate?: number | null;
-          calc_method?: string | null;
+          buy_margin_percent?: number | null;
+          sell_margin_percent?: number | null;
           created_at?: string | null;
           updated_at?: string | null;
         };
         Update: {
           id?: number;
           exchange_rate?: number | null;
-          calc_method?: string | null;
+          buy_margin_percent?: number | null;
+          sell_margin_percent?: number | null;
           created_at?: string | null;
           updated_at?: string | null;
         };
@@ -374,21 +377,33 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      apply_gold_price_snapshot: {
+        Args: {
+          p_source_price_per_oz: number;
+          p_source?: string | null;
+          p_raw_payload?: Json | null;
+        };
+        Returns: Json;
+      };
       current_auth_uid: {
         Args: Record<PropertyKey, never>;
         Returns: string | null;
+      };
+      has_authenticated_email: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
       };
       is_admin: {
         Args: { user_uuid: string };
         Returns: boolean | null;
       };
+      recalculate_gold_prices: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
       set_user_role: {
         Args: { target_user_id: string; new_role: string };
         Returns: undefined;
-      };
-      verify_admin_password: {
-        Args: { input_password: string };
-        Returns: boolean;
       };
     };
     Enums: Record<string, never>;

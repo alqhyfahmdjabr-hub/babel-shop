@@ -51,12 +51,10 @@ export interface AppPreferences {
   backgroundOpacity: number;
 }
 
-// Global Pricing Settings Types (from Supabase app_settings table)
-export type PricingCalcMethod = 'db_prices' | 'from_ounce';
-
 export interface PricingSettings {
   exchangeRate: number;
-  calcMethod: PricingCalcMethod;
+  buyMarginPercent: number;
+  sellMarginPercent: number;
 }
 
 // Pattern Types

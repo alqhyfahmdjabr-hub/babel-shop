@@ -34,7 +34,8 @@ const SCROLL_THRESHOLD = 500;
 type ProtectedAction = 'requests' | 'checkout' | 'admin';
 const DEFAULT_PRICING_SETTINGS: PricingSettings = {
   exchangeRate: 3.8,
-  calcMethod: 'db_prices'
+  buyMarginPercent: 0,
+  sellMarginPercent: 0
 };
 
 // 🆕 NEW: Loading fallback component
@@ -107,6 +108,8 @@ const App: FC = () => {
   // 🆕 NEW: Toast notifications
   const { toasts, removeToast, success, error: showError } = useToast();
 
+  const canViewGoldPricing = Boolean(session?.user?.email);
+
   // Refs
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -138,13 +141,18 @@ const App: FC = () => {
   const fetchInitialData = useCallback(async () => {
     try {
       setLoadingError('');
-      const [loadedPrefs, fetchedPrices, fetchedProducts, fetchedOunceUsd, fetchedPricingSettings] = await Promise.all([
+      const [loadedPrefs, fetchedProducts, pricingData] = await Promise.all([
         getAppPreferences(),
-        fetchWithTimeout(api.getPrices()),
         fetchWithTimeout(api.getProducts(0, ITEMS_PER_PAGE)),
-        fetchWithTimeout(api.getLatestOuncePriceUsd()),
-        fetchWithTimeout(api.getPricingSettings())
+        canViewGoldPricing
+          ? Promise.all([
+              fetchWithTimeout(api.getPrices()),
+              fetchWithTimeout(api.getLatestOuncePriceUsd()),
+              fetchWithTimeout(api.getPricingSettings())
+            ])
+          : Promise.resolve<[GoldPrice[], number | null, PricingSettings | null]>([[], null, null])
       ]);
+      const [fetchedPrices, fetchedOunceUsd, fetchedPricingSettings] = pricingData;
 
       setPreferences(loadedPrefs);
       setBgState({
@@ -168,7 +176,7 @@ const App: FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchWithTimeout, showError]);
+  }, [canViewGoldPricing, fetchWithTimeout, showError]);
 
   const checkUserRole = useCallback(async (userId: string) => {
     try {
@@ -418,6 +426,9 @@ const App: FC = () => {
       setIsAdminOpen(false);
       setActiveTab('home');
       setFavorites([]);
+      setCurrentPrices([]);
+      setLiveOunceUsd(null);
+      setPricingSettings(DEFAULT_PRICING_SETTINGS);
       success('تم تسجيل الخروج بنجاح');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -431,12 +442,17 @@ const App: FC = () => {
   const refreshData = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const [updatedPrices, initialProds, updatedOunceUsd, updatedPricingSettings] = await Promise.all([
-        fetchWithTimeout(api.getPrices()),
+      const [initialProds, pricingData] = await Promise.all([
         fetchWithTimeout(api.getProducts(0, ITEMS_PER_PAGE)),
-        fetchWithTimeout(api.getLatestOuncePriceUsd()),
-        fetchWithTimeout(api.getPricingSettings()),
+        canViewGoldPricing
+          ? Promise.all([
+              fetchWithTimeout(api.getPrices()),
+              fetchWithTimeout(api.getLatestOuncePriceUsd()),
+              fetchWithTimeout(api.getPricingSettings())
+            ])
+          : Promise.resolve<[GoldPrice[], number | null, PricingSettings | null]>([[], null, null])
       ]);
+      const [updatedPrices, updatedOunceUsd, updatedPricingSettings] = pricingData;
       setCurrentPrices(updatedPrices);
       setLiveOunceUsd(updatedOunceUsd);
       setPricingSettings(updatedPricingSettings ?? DEFAULT_PRICING_SETTINGS);
@@ -450,7 +466,7 @@ const App: FC = () => {
     } finally {
       setTimeout(() => setIsRefreshing(false), 500);
     }
-  }, [fetchWithTimeout, success, showError]);
+  }, [canViewGoldPricing, fetchWithTimeout, success, showError]);
 
   // ==========================================
   // 🔍 Search Handler
@@ -651,7 +667,27 @@ const App: FC = () => {
           <main className="max-w-xl mx-auto px-6 relative z-10 space-y-10 min-h-[500px]">
             {activeTab === 'home' && (
               <Suspense fallback={<ComponentLoader />}>
-                <GoldTicker prices={currentPrices} liveOunceUsd={liveOunceUsd} pricingSettings={pricingSettings} />
+                {canViewGoldPricing ? (
+                  <GoldTicker prices={currentPrices} liveOunceUsd={liveOunceUsd} pricingSettings={pricingSettings} />
+                ) : (
+                  <div className="relative overflow-hidden rounded-[2.5rem] border border-gold-500/15 bg-[#0D0D0D]/85 p-6 text-center shadow-[0_25px_90px_-40px_rgba(212,175,55,0.28)]">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(212,175,55,0.12),_transparent_55%)]" />
+                    <div className="relative z-10 space-y-3">
+                      <p className="text-xs uppercase tracking-[0.35em] text-gold-400/60">Gold Pricing Access</p>
+                      <h3 className="font-serif text-2xl text-gold-100">سجّل الدخول لعرض أسعار الأونصة</h3>
+                      <p className="mx-auto max-w-md text-sm leading-7 text-gray-400">
+                        أسعار الذهب المباشرة وإعدادات التحويل لا تظهر إلا للمستخدمين المسجلين ببريد إلكتروني.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => openAuthPrompt()}
+                        className="inline-flex items-center justify-center rounded-2xl bg-gold-600 px-6 py-3 text-sm font-bold text-black transition-colors hover:bg-gold-500"
+                      >
+                        تسجيل الدخول
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-3 gap-3 animate-fade-in mb-8">
                   {[
                     { icon: Crown, title: 'موديلات حصرية', subtitle: 'ومتجددة' },
@@ -724,7 +760,7 @@ const App: FC = () => {
             {/* Products Grid */}
             {activeTab === 'requests' ? (
               <Suspense fallback={<ComponentLoader />}>
-                <RequestSection contact={CONTACT_INFO} liveOunceUsd={liveOunceUsd} pricingSettings={pricingSettings} />
+                <RequestSection contact={CONTACT_INFO} prices={currentPrices} />
               </Suspense>
             ) : filteredProducts.length > 0 ? (
               <>

@@ -99,6 +99,18 @@ export default defineConfig(({ mode }) => {
       host: true,
     },
 
+    test: {
+      include: [
+        'src/**/*.test.ts',
+        'src/**/*.test.tsx'
+      ],
+      exclude: [
+        '**/.playwright-tmp/**',
+        '**/e2e/**',
+        '**/test-results/**'
+      ],
+    },
+
     css: {
       devSourcemap: true,
       postcss: {

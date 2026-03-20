@@ -1,4 +1,4 @@
-import { ContactInfo, Product, GoldPrice, Pattern } from './types/types';
+import { ContactInfo, Product, Pattern } from './types/types';
 
 export const APP_NAME = 'مجوهرات بابل';
 export const APP_VERSION = '1.0.0';
@@ -151,12 +151,6 @@ export const PRODUCTS: Product[] = [
   }
 ];
 
-export const MOCK_PRICES: GoldPrice[] = [
-  { karat: 24, buy: 34500, sell: 35000 },
-  { karat: 21, buy: 30200, sell: 30800 },
-  { karat: 18, buy: 25800, sell: 26500 }
-];
-
 export const WHATSAPP_COUNTRY_CODE = '967';
 
 export const CONTACT_INFO: ContactInfo = {
@@ -175,7 +169,6 @@ export const CONTACT_INFO: ContactInfo = {
 export const QURAN_VERSE =
   'يَا أَيُّهَا الَّذِينَ آمَنُوا لَا تَأْكُلُوا أَمْوَالَكُم بَيْنَكُم بِالْبَاطِلِ إِلَّا أَن تَكُونَ تِجَارَةً عَن تَرَاضٍ مِّنكُمْ';
 
-export const KEY_PRICES = 'gold_prices';
 export const KEY_PRODUCTS = 'products';
 export const KEY_FAVORITES = 'favorites';
 export const KEY_REQUESTS = 'requests';

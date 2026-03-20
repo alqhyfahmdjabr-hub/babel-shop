@@ -1,6 +1,5 @@
 ﻿import { supabase } from '../supabase-client';
 import { Product, GoldPrice, ClientRequest, PricingSettings } from '../types/types';
-import { MOCK_PRICES } from '../constants';
 
 // Table names as defined in database
 const TABLE_PRODUCTS = 'products';
@@ -12,7 +11,21 @@ const TABLE_APP_SETTINGS = 'app_settings';
 
 type AppSettingsRow = {
   exchange_rate: number;
-  calc_method: 'db_prices' | 'from_ounce';
+  buy_margin_percent: number;
+  sell_margin_percent: number;
+};
+
+const getAuthenticatedEmailUser = async () => {
+  const {
+    data: { user },
+    error
+  } = await supabase.auth.getUser();
+
+  if (error || !user?.email) {
+    return null;
+  }
+
+  return user;
 };
 
 /**
@@ -136,14 +149,17 @@ export const api = {
   // --- prices ---
   async getPrices(): Promise<GoldPrice[]> {
     try {
+      const user = await getAuthenticatedEmailUser();
+      if (!user) return [];
+
       const { data, error } = await supabase
         .from(TABLE_PRICES)
         .select('karat, buy, sell')
         .order('karat', { ascending: false });
 
       if (error || !data || data.length === 0) {
-        console.warn('No prices found, using mock data');
-        return MOCK_PRICES;
+        console.warn('No gold prices available:', error?.message || 'empty');
+        return [];
       }
       
       return data.map(p => ({
@@ -153,15 +169,18 @@ export const api = {
       }));
     } catch (error) {
       console.error('Error fetching prices:', error);
-      return MOCK_PRICES;
+      return [];
     }
   },
 
   async getPricingSettings(): Promise<PricingSettings | null> {
     try {
+      const user = await getAuthenticatedEmailUser();
+      if (!user) return null;
+
       const { data, error } = await supabase
         .from(TABLE_APP_SETTINGS)
-        .select('exchange_rate, calc_method')
+        .select('exchange_rate, buy_margin_percent, sell_margin_percent')
         .eq('id', 1)
         .maybeSingle();
 
@@ -172,15 +191,25 @@ export const api = {
 
       const settingsRow = data as AppSettingsRow;
       const exchangeRate = Number(settingsRow.exchange_rate);
-      const calcMethod = settingsRow.calc_method === 'from_ounce' ? 'from_ounce' : 'db_prices';
+      const buyMarginPercent = Number(settingsRow.buy_margin_percent);
+      const sellMarginPercent = Number(settingsRow.sell_margin_percent);
 
       if (!Number.isFinite(exchangeRate) || exchangeRate <= 0) {
         return null;
       }
 
+      if (!Number.isFinite(buyMarginPercent) || buyMarginPercent < 0) {
+        return null;
+      }
+
+      if (!Number.isFinite(sellMarginPercent) || sellMarginPercent < 0) {
+        return null;
+      }
+
       return {
         exchangeRate,
-        calcMethod
+        buyMarginPercent,
+        sellMarginPercent
       };
     } catch (error) {
       console.error('Error fetching pricing settings:', error);
@@ -195,7 +224,8 @@ export const api = {
         .upsert({
           id: 1,
           exchange_rate: settings.exchangeRate,
-          calc_method: settings.calcMethod,
+          buy_margin_percent: settings.buyMarginPercent,
+          sell_margin_percent: settings.sellMarginPercent,
           updated_at: new Date().toISOString()
         }, { onConflict: 'id' });
 
@@ -208,6 +238,9 @@ export const api = {
 
   async getLatestOuncePriceUsd(): Promise<number | null> {
     try {
+      const user = await getAuthenticatedEmailUser();
+      if (!user) return null;
+
       const { data, error } = await supabase
         .from(TABLE_PRICE_HISTORY)
         .select('source_price_per_oz')
@@ -225,24 +258,6 @@ export const api = {
     } catch (error) {
       console.error('Error fetching ounce price:', error);
       return null;
-    }
-  },
-
-  async updatePrices(prices: GoldPrice[]): Promise<void> {
-    try {
-      
-      const { error } = await supabase
-        .from(TABLE_PRICES)
-        .upsert(prices.map(p => ({
-          karat: p.karat,
-          buy: p.buy,
-          sell: p.sell
-        })),{ onConflict: 'karat' });
-        
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error saving prices:', error);
-      throw error;
     }
   },
 
