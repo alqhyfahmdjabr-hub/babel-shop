@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#B8860B</color> <!-- لون ذهبي يتناسب مع المجوهرات -->
+    <color name="colorPrimaryDark">#8B6508</color>
+    <color name="colorAccent">#FFD700</color>
+    <color name="status_bar_color">#FFFFFF</color>
+</resources>
