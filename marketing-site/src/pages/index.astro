@@ -1,0 +1,544 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { site } from "../config/site";
+
+const phoneHref = `tel:${site.contact.phone.replace(/\s+/g, "")}`;
+const whatsappHref = `https://wa.me/${site.contact.whatsapp.replace(/[^\d]/g, "")}`;
+const mailHref = `mailto:${site.contact.email}`;
+---
+
+<BaseLayout title="الموقع الرسمي" canonicalPath="/">
+  <Header />
+
+  <main>
+    <section class="relative overflow-hidden">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(212,175,55,0.22),_rgba(2,2,2,0.96)_58%)]"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-transparent via-babil-black to-babil-black"></div>
+
+      <div class="container relative grid items-center gap-12 py-16 md:grid-cols-2 md:py-24">
+        <div>
+          <div class="inline-flex items-center gap-2 rounded-full border border-brand-400/20 bg-brand-900/10 px-4 py-2 text-xs text-brand-100/80">
+            <span class="h-2 w-2 rounded-full bg-brand-400 shadow-[0_0_18px_rgba(212,175,55,0.55)]"></span>
+            {site.name} {site.tagline}
+          </div>
+
+          <h1 class="mt-6 text-3xl font-extrabold leading-tight text-white md:text-5xl">
+            اكتشف مجوهراتنا
+            <span class="block text-brand-gradient font-serif">واطلبها بثقة</span>
+          </h1>
+
+          <p class="mt-5 max-w-xl text-base leading-relaxed text-gray-300 md:text-lg">
+            تصفح الكتالوج العام، شاهد مؤشرات أسعار الذهب داخل التطبيق، ثم أرسل طلبك بسهولة عبر الاستوديو الذكي.
+          </p>
+
+          <div class="mt-7 flex flex-col gap-3 sm:flex-row">
+            <a href="#catalog" class="btn-primary">استعرض الكتالوج</a>
+            <a href="#studio" class="btn-secondary">أرسل طلبك الآن</a>
+          </div>
+
+          <div class="mt-10 grid max-w-xl grid-cols-3 gap-3 text-center text-xs text-gray-300">
+            <div class="glass rounded-3xl p-4">
+              <div class="text-sm font-extrabold text-white">ضمان</div>
+              العيار
+            </div>
+            <div class="glass rounded-3xl p-4">
+              <div class="text-sm font-extrabold text-white">أصالة</div>
+              وجودة
+            </div>
+            <div class="glass rounded-3xl p-4">
+              <div class="text-sm font-extrabold text-white">دقة</div>
+              في الوزن
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-center md:justify-end">
+          <div class="relative w-full max-w-md">
+            <div class="absolute -inset-6 rounded-[3rem] bg-brand-400/12 blur-3xl"></div>
+            <div class="card relative overflow-hidden p-6">
+              <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(212,175,55,0.14),_rgba(13,13,13,0.92)_55%)]"></div>
+              <div class="relative">
+                <img src="/images/hero-app.svg" alt="واجهة تطبيق بابل" class="w-full" loading="lazy" />
+              </div>
+            </div>
+            <div class="mt-4 flex items-center justify-between text-xs text-gray-400">
+              <span class="inline-flex items-center gap-2">
+                <span class="h-1.5 w-1.5 rounded-full bg-brand-400"></span>
+                واجهة فاخرة وواضحة
+              </span>
+              <span>مؤشر أسعار (محاكاة) لجمالية العرض</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="prices" class="py-16 bg-gradient-to-b from-babil-black via-[#080808] to-babil-black">
+      <div class="container">
+        <h2 class="text-2xl font-extrabold text-white md:text-3xl">مؤشر أسعار الذهب</h2>
+        <p class="mt-4 max-w-3xl text-gray-300 leading-relaxed">
+          هذا القسم يعرض محاكاة بصرية لأسعار الذهب لجمالية الموقع فقط. داخل التطبيق تظهر مؤشرات الأسعار بشكل محدث.
+        </p>
+
+        <div class="mt-10 grid gap-4 md:grid-cols-2">
+          <div class="card overflow-hidden">
+            <div class="border-b border-white/10 bg-white/5 px-6 py-5">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <div class="text-sm font-extrabold text-white">LIVE OUNCE PRICE</div>
+                  <div class="mt-1 text-xs text-gray-400">USD</div>
+                </div>
+                <div class="inline-flex items-center gap-2 rounded-full border border-brand-400/25 bg-brand-900/10 px-3 py-1 text-xs text-brand-100/80">
+                  <span class="h-2 w-2 rounded-full bg-brand-400"></span>
+                  LIVE
+                </div>
+              </div>
+            </div>
+            <div class="px-6 py-7">
+              <div class="price-flash text-3xl font-extrabold text-brand-200" data-price="ounceUsd">$5,160.64</div>
+              <div class="mt-4 inline-flex items-center gap-2 rounded-full border border-brand-400/20 bg-brand-900/10 px-3 py-1 text-xs text-brand-100/80">
+                <span class="rounded-full border border-brand-400/25 bg-babil-card px-2 py-0.5 text-[11px] font-extrabold text-brand-100/85">
+                  محاكاة
+                </span>
+                السعر المعروض محاكاة لأغراض العرض فقط
+              </div>
+            </div>
+          </div>
+
+          <div class="card overflow-hidden">
+            <div class="border-b border-white/10 bg-white/5 px-6 py-5">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <div class="text-sm font-extrabold text-white">CONVERTED OUNCE</div>
+                  <div class="mt-1 text-xs text-gray-400">Saudi Riyal</div>
+                </div>
+                <div class="text-xs text-gray-500">USD → SAR</div>
+              </div>
+            </div>
+            <div class="px-6 py-7">
+              <div class="price-flash text-3xl font-extrabold text-brand-200" data-price="ounceSar">SAR 19,604.53</div>
+              <div class="mt-4 inline-flex items-center gap-2 rounded-full border border-brand-400/20 bg-brand-900/10 px-3 py-1 text-xs text-brand-100/80">
+                <span class="rounded-full border border-brand-400/25 bg-babil-card px-2 py-0.5 text-[11px] font-extrabold text-brand-100/85">
+                  محاكاة
+                </span>
+                السعر المعروض محاكاة لأغراض العرض فقط
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 grid gap-4 md:grid-cols-2">
+          <div class="card p-6">
+            <div class="flex items-center justify-between gap-3">
+              <div class="text-xs tracking-[0.24em] text-gray-400">SPOT CARD</div>
+              <div class="rounded-full border border-brand-400/25 bg-brand-900/10 px-4 py-1 text-sm font-extrabold text-brand-100/85">عيار 24</div>
+            </div>
+            <div class="mt-5 grid grid-cols-2 gap-3">
+              <div class="rounded-3xl border border-brand-400/20 bg-brand-900/10 p-5">
+                <div class="text-xs text-gray-400">بيع</div>
+                <div class="price-flash mt-2 text-xl font-extrabold text-brand-200" data-price="spot24Sell">ر.س 169.51</div>
+              </div>
+              <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <div class="text-xs text-gray-400">شراء</div>
+                <div class="price-flash mt-2 text-xl font-extrabold text-brand-200" data-price="spot24Buy">ر.س 169.93</div>
+              </div>
+            </div>
+            <div class="mt-4 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+              <span class="rounded-full border border-brand-400/20 bg-brand-900/10 px-2 py-1 text-[11px] font-extrabold text-brand-100/85">
+                محاكاة
+              </span>
+              تحديث محاكاة داخل الموقع
+              <span class="text-gray-600">•</span>
+              <span data-price="updatedAt">--:--</span>
+            </div>
+          </div>
+
+          <div class="card p-6">
+            <div class="flex items-center justify-between gap-3">
+              <div class="text-xs tracking-[0.24em] text-gray-400">SPOT CARD</div>
+              <div class="rounded-full border border-brand-400/25 bg-brand-900/10 px-4 py-1 text-sm font-extrabold text-brand-100/85">عيار 21</div>
+            </div>
+            <div class="mt-5 grid grid-cols-2 gap-3">
+              <div class="rounded-3xl border border-brand-400/20 bg-brand-900/10 p-5">
+                <div class="text-xs text-gray-400">بيع</div>
+                <div class="price-flash mt-2 text-xl font-extrabold text-brand-200" data-price="spot21Sell">ر.س 151.01</div>
+              </div>
+              <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <div class="text-xs text-gray-400">شراء</div>
+                <div class="price-flash mt-2 text-xl font-extrabold text-brand-200" data-price="spot21Buy">ر.س 151.48</div>
+              </div>
+            </div>
+            <div class="mt-4 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+              <span class="rounded-full border border-brand-400/20 bg-brand-900/10 px-2 py-1 text-[11px] font-extrabold text-brand-100/85">
+                محاكاة
+              </span>
+              تحديث محاكاة داخل الموقع
+              <span class="text-gray-600">•</span>
+              <span data-price="updatedAt2">--:--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="catalog" class="py-16">
+      <div class="container">
+        <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 class="text-2xl font-extrabold text-white md:text-3xl">الكتالوج العام</h2>
+            <p class="mt-3 max-w-3xl text-gray-300 leading-relaxed">
+              تصفح إرثنا من الذهب والمجوهرات، وابحث بسهولة عن قطعة نادرة. أضف للمفضلة لتعود لها لاحقًا.
+            </p>
+          </div>
+          <a href="#screens" class="btn-secondary px-4 py-2">شاهد لقطات الكتالوج</a>
+        </div>
+
+        <div class="mt-10 grid gap-4 md:grid-cols-3">
+          <div class="card p-6 md:col-span-2">
+            <div class="text-xs text-gray-400">ابحث عن قطعة نادرة...</div>
+            <div class="mt-4 flex items-center gap-3 rounded-3xl border border-white/10 bg-white/5 px-5 py-4">
+              <div class="h-9 w-9 rounded-2xl bg-brand-900/10 border border-brand-400/20"></div>
+              <div class="flex-1">
+                <div class="h-3 w-40 rounded-full bg-white/10"></div>
+                <div class="mt-2 h-3 w-28 rounded-full bg-white/10"></div>
+              </div>
+              <div class="h-10 w-10 rounded-2xl bg-white/5 border border-white/10"></div>
+            </div>
+
+            <div class="mt-6 grid gap-3 sm:grid-cols-2">
+              <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <div class="text-xs text-gray-400">21K</div>
+                <div class="mt-2 text-base font-extrabold text-white">طقم ذهب “الملكة”</div>
+                <div class="mt-3 h-20 rounded-2xl bg-[radial-gradient(circle_at_top,_rgba(212,175,55,0.12),_rgba(255,255,255,0.03)_65%)] border border-white/10"></div>
+              </div>
+              <div class="rounded-3xl border border-white/10 bg-white/5 p-5">
+                <div class="text-xs text-gray-400">24K</div>
+                <div class="mt-2 text-base font-extrabold text-white">سبائك الذهب الاستثمارية</div>
+                <div class="mt-3 h-20 rounded-2xl bg-[radial-gradient(circle_at_top,_rgba(212,175,55,0.12),_rgba(255,255,255,0.03)_65%)] border border-white/10"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass rounded-3xl p-6">
+            <div class="text-sm font-extrabold text-white">مميزات التصفح</div>
+            <ul class="mt-4 space-y-3 text-sm text-gray-300">
+              <li>تفاصيل واضحة وصور كبيرة</li>
+              <li>بحث سريع داخل الكتالوج</li>
+              <li>مفضلة للوصول السريع</li>
+              <li>تصنيف حسب العيار</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="studio" class="py-16 bg-gradient-to-b from-babil-black via-[#080808] to-babil-black">
+      <div class="container">
+        <h2 class="text-2xl font-extrabold text-white md:text-3xl">الاستوديو الذكي</h2>
+        <p class="mt-4 max-w-3xl text-gray-300 leading-relaxed">
+          إذا تبحث عن تصميم محدد أو تريد قطعة حسب ذوقك: اكتب اسم القطعة، اختر النوع والعيار، أرفق صورة، ثم أرسل الطلب.
+        </p>
+
+        <div class="mt-10 grid gap-4 md:grid-cols-3">
+          <div class="card p-6 md:col-span-2">
+            <div class="flex items-center justify-between gap-3">
+              <div class="rounded-3xl border border-white/10 bg-white/5 px-5 py-3 text-sm text-gray-300">متابعة طلباتي</div>
+              <div class="rounded-3xl border border-brand-400/20 bg-brand-900/10 px-5 py-3 text-sm font-extrabold text-brand-100/85">
+                طلب جديد
+              </div>
+            </div>
+
+            <div class="mt-6 rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div class="text-lg font-extrabold text-white">اكتب اسم القطعة...</div>
+              <div class="mt-4 flex flex-wrap gap-2">
+                <span class="rounded-full border border-brand-400/20 bg-brand-900/10 px-4 py-2 text-sm text-brand-100/85">خاتم</span>
+                <span class="rounded-full border border-brand-400/20 bg-brand-900/10 px-4 py-2 text-sm text-brand-100/85">عقد</span>
+                <span class="rounded-full border border-brand-400/20 bg-brand-900/10 px-4 py-2 text-sm text-brand-100/85">سوار</span>
+              </div>
+
+              <div class="mt-6 grid gap-3 sm:grid-cols-2">
+                <div class="rounded-3xl border border-white/10 bg-babil-card p-5">
+                  <div class="text-xs text-gray-400">صور الإلهام للتصميم</div>
+                  <div class="mt-3 h-20 rounded-2xl bg-white/5 border border-white/10"></div>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-babil-card p-5">
+                  <div class="text-xs text-gray-400">العيار لحساب التقدير</div>
+                  <div class="mt-3 flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-gray-200">
+                    <span>21K</span>
+                    <span class="text-gray-500">▾</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-5 rounded-3xl border border-brand-400/20 bg-brand-900/10 p-5">
+                <div class="text-sm font-extrabold text-brand-100/85">التقدير المبدئي للذهب (دولار)</div>
+                <div class="mt-2 text-sm text-gray-400">أجور المصنعية تحدد عبر واتساب</div>
+              </div>
+
+              <div class="mt-5 rounded-3xl border border-white/10 bg-white/5 p-5 text-center text-sm text-gray-300">
+                رفع صورة القطعة
+              </div>
+
+              <div class="mt-5 rounded-3xl border border-white/10 bg-white/5 p-5">
+                <div class="text-xs text-gray-400">رقم الهاتف</div>
+                <div class="mt-3 h-10 rounded-2xl bg-white/5 border border-white/10"></div>
+              </div>
+
+              <div class="mt-6">
+                <a class="btn-primary w-full" href="#trial">إرسال الطلب</a>
+                <p class="mt-3 text-xs text-gray-500">
+                  بعد الإرسال يمكنك متابعة الحالة من تبويب <span class="text-gray-300">متابعة طلباتي</span>.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass rounded-3xl p-6">
+            <div class="text-sm font-extrabold text-white">لماذا الاستوديو؟</div>
+            <ul class="mt-4 space-y-3 text-sm text-gray-300">
+              <li>طلب واضح بدون نواقص</li>
+              <li>إرفاق صورة لتوضيح المطلوب</li>
+              <li>اختيار العيار بسهولة</li>
+              <li>متابعة بسيطة لحالة الطلب</li>
+            </ul>
+            <div class="mt-6 rounded-3xl border border-brand-400/20 bg-brand-900/10 p-5 text-sm text-brand-100/85">
+              أجور المصنعية تحدد عبر واتساب
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="py-16">
+      <div class="container">
+        <h2 class="text-2xl font-extrabold text-white md:text-3xl">مميزات بابل</h2>
+        <p class="mt-4 max-w-3xl text-gray-300 leading-relaxed">
+          تصميم داكن فاخر، تفاصيل ذهبية هادئة، وخدمات تساعدك على اتخاذ قرار أفضل ثم إرسال طلبك بسهولة.
+        </p>
+
+        <div class="mt-10 grid gap-4 md:grid-cols-3">
+          <div class="glass rounded-3xl p-6">
+            <h3 class="text-base font-extrabold text-white">الكتالوج العام</h3>
+            <p class="mt-3 text-sm text-gray-300">تصفح، بحث، ومفضلة للوصول السريع.</p>
+          </div>
+          <div class="glass rounded-3xl p-6">
+            <h3 class="text-base font-extrabold text-white">مؤشرات أسعار الذهب</h3>
+            <p class="mt-3 text-sm text-gray-300">Live Global Gold Feed و Spot Card حسب العيار.</p>
+          </div>
+          <div class="glass rounded-3xl p-6">
+            <h3 class="text-base font-extrabold text-white">الاستوديو الذكي</h3>
+            <p class="mt-3 text-sm text-gray-300">اطلب قطعة حسب ذوقك مع صورة وتفاصيل واضحة.</p>
+          </div>
+          <div class="glass rounded-3xl p-6">
+            <h3 class="text-base font-extrabold text-white">متابعة الطلبات</h3>
+            <p class="mt-3 text-sm text-gray-300">اعرف حالة طلبك وتحديثاته بدون تعقيد.</p>
+          </div>
+          <div class="glass rounded-3xl p-6">
+            <h3 class="text-base font-extrabold text-white">أمانة وسعر مضمون</h3>
+            <p class="mt-3 text-sm text-gray-300">أمانة في البيع والشراء وسعر مضمون ومنافس للسوق.</p>
+          </div>
+          <div class="glass rounded-3xl p-6">
+            <h3 class="text-base font-extrabold text-white">حالات حصرية ومتجددة</h3>
+            <p class="mt-3 text-sm text-gray-300">محتوى يتجدد باستمرار داخل التطبيق.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screens" class="py-16">
+      <div class="container">
+        <h2 class="text-2xl font-extrabold text-white md:text-3xl">لقطات من داخل التطبيق</h2>
+        <p class="mt-4 max-w-3xl text-gray-300 leading-relaxed">
+          أضف صور الشاشات الحقيقية هنا ليظهر الموقع مطابقًا للتطبيق. عند عدم توفرها يتم عرض لقطات توضيحية تلقائيًا.
+        </p>
+
+        <div class="mt-10 grid gap-4 md:grid-cols-3">
+          <figure class="card overflow-hidden p-4">
+            <div
+              class="aspect-[9/16] w-full rounded-2xl border border-white/10 bg-center bg-cover"
+              style={`background-image: url('/images/screens/app-home.jpg'), url('/images/screens/screen-1.svg');`}
+              role="img"
+              aria-label="الواجهة الرئيسية وأسعار الذهب"
+            ></div>
+            <figcaption class="mt-4 text-sm text-gray-300">الرئيسية وأسعار الذهب</figcaption>
+          </figure>
+          <figure class="card overflow-hidden p-4">
+            <div
+              class="aspect-[9/16] w-full rounded-2xl border border-white/10 bg-center bg-cover"
+              style={`background-image: url('/images/screens/app-catalog.jpg'), url('/images/screens/screen-2.svg');`}
+              role="img"
+              aria-label="الكتالوج العام والبحث"
+            ></div>
+            <figcaption class="mt-4 text-sm text-gray-300">الكتالوج والبحث</figcaption>
+          </figure>
+          <figure class="card overflow-hidden p-4">
+            <div
+              class="aspect-[9/16] w-full rounded-2xl border border-white/10 bg-center bg-cover"
+              style={`background-image: url('/images/screens/app-studio.jpg'), url('/images/screens/screen-3.svg');`}
+              role="img"
+              aria-label="الاستوديو الذكي وإرسال الطلب"
+            ></div>
+            <figcaption class="mt-4 text-sm text-gray-300">الاستوديو الذكي</figcaption>
+          </figure>
+        </div>
+
+        <div class="mt-8 text-xs text-gray-500">
+          ضع الصور الحقيقية في:
+          <span class="text-gray-300">public/images/screens/app-home.jpg</span> و
+          <span class="text-gray-300">public/images/screens/app-catalog.jpg</span> و
+          <span class="text-gray-300">public/images/screens/app-studio.jpg</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="trial" class="py-16 bg-gradient-to-b from-babil-black via-[#080808] to-babil-black">
+      <div class="container">
+        <div class="card overflow-hidden">
+          <div class="relative p-8 md:p-10">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(212,175,55,0.18),_rgba(13,13,13,0.9)_60%)]"></div>
+            <div class="relative grid gap-8 md:grid-cols-2 md:items-center">
+              <div>
+                <h2 class="text-2xl font-extrabold text-white md:text-3xl">اتصل بنا أو أرسل طلبك</h2>
+                <p class="mt-4 max-w-xl text-gray-300 leading-relaxed">
+                  للطلب أو الاستفسار، تواصل عبر واتساب أو الهاتف. سنرد بأقرب وقت.
+                </p>
+              </div>
+
+              <div class="grid gap-3">
+                <a class="glass rounded-3xl p-5 hover:bg-white/10" href={whatsappHref} target="_blank" rel="noreferrer">
+                  <div class="flex items-center justify-between gap-3">
+                    <div>
+                      <div class="text-sm font-extrabold text-white">واتساب</div>
+                      <div class="mt-1 text-sm text-gray-300">خدمة العملاء (واتساب)</div>
+                    </div>
+                    <span class="text-sm font-bold text-brand-200">فتح</span>
+                  </div>
+                </a>
+
+                <a class="glass rounded-3xl p-5 hover:bg-white/10" href={phoneHref}>
+                  <div class="flex items-center justify-between gap-3">
+                    <div>
+                      <div class="text-sm font-extrabold text-white">الهاتف</div>
+                      <div class="mt-1 text-sm text-gray-300" dir="ltr">{site.contact.phone}</div>
+                    </div>
+                    <span class="text-sm font-bold text-brand-200">اتصال</span>
+                  </div>
+                </a>
+
+                <a class="glass rounded-3xl p-5 hover:bg-white/10" href={mailHref}>
+                  <div class="flex items-center justify-between gap-3">
+                    <div>
+                      <div class="text-sm font-extrabold text-white">البريد الإلكتروني</div>
+                      <div class="mt-1 text-sm text-gray-300">{site.contact.email}</div>
+                    </div>
+                    <span class="text-sm font-bold text-brand-200">إرسال</span>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <a
+      href={whatsappHref}
+      target="_blank"
+      rel="noreferrer"
+      aria-label="تواصل عبر واتساب"
+      class="fixed bottom-6 left-6 z-50 inline-flex items-center gap-3 rounded-full border border-brand-400/25 bg-babil-card/80 px-5 py-3 text-sm font-extrabold text-white shadow-luxury backdrop-blur-xl hover:bg-babil-card"
+    >
+      <span class="h-2 w-2 rounded-full bg-brand-400 shadow-[0_0_18px_rgba(212,175,55,0.55)]"></span>
+      واتساب
+    </a>
+  </main>
+
+  <Footer />
+
+  <script is:inline type="module">
+    const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+
+    const formatNumber = (value) =>
+      new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+
+    const setText = (selector, text) => {
+      const el = document.querySelector(selector);
+      if (!el) return null;
+      el.textContent = text;
+      return el;
+    };
+
+    const flash = (el, direction) => {
+      if (!el || prefersReducedMotion) return;
+      el.classList.remove("flash-up", "flash-down");
+      // Force reflow so the animation restarts.
+      void el.offsetWidth;
+      el.classList.add(direction > 0 ? "flash-up" : "flash-down");
+    };
+
+    const nowTime = () => {
+      const d = new Date();
+      return d.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
+    };
+
+    const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+    const rand = (min, max) => Math.random() * (max - min) + min;
+
+    const state = {
+      ounceUsd: 5160.64,
+      usdToSar: 3.8,
+      spotScale24: 0.033,
+      spotSpread: 0.42,
+    };
+
+    const updateAll = (direction) => {
+      const ounceSar = state.ounceUsd * state.usdToSar;
+
+      const spot24Mid = state.ounceUsd * state.spotScale24;
+      const spot21Mid = spot24Mid * 0.875;
+
+      const spot24Buy = spot24Mid + state.spotSpread / 2;
+      const spot24Sell = spot24Mid - state.spotSpread / 2;
+
+      const spot21Buy = spot21Mid + state.spotSpread / 2;
+      const spot21Sell = spot21Mid - state.spotSpread / 2;
+
+      const ounceUsdEl = setText('[data-price="ounceUsd"]', `$${formatNumber(state.ounceUsd)}`);
+      const ounceSarEl = setText('[data-price="ounceSar"]', `SAR ${formatNumber(ounceSar)}`);
+
+      const spot24SellEl = setText('[data-price="spot24Sell"]', `ر.س ${formatNumber(spot24Sell)}`);
+      const spot24BuyEl = setText('[data-price="spot24Buy"]', `ر.س ${formatNumber(spot24Buy)}`);
+      const spot21SellEl = setText('[data-price="spot21Sell"]', `ر.س ${formatNumber(spot21Sell)}`);
+      const spot21BuyEl = setText('[data-price="spot21Buy"]', `ر.س ${formatNumber(spot21Buy)}`);
+
+      setText('[data-price="updatedAt"]', nowTime());
+      setText('[data-price="updatedAt2"]', nowTime());
+
+      flash(ounceUsdEl, direction);
+      flash(ounceSarEl, direction);
+      flash(spot24SellEl, direction);
+      flash(spot24BuyEl, direction);
+      flash(spot21SellEl, direction);
+      flash(spot21BuyEl, direction);
+    };
+
+    const tick = () => {
+      const prev = state.ounceUsd;
+
+      const step = rand(0.8, 6.5);
+      const bias = Math.random() < 0.52 ? 1 : -1;
+      state.ounceUsd = clamp(prev + bias * step, 4500, 6500);
+
+      // Small FX wiggle for aesthetics.
+      state.usdToSar = clamp(state.usdToSar + rand(-0.01, 0.01), 3.6, 4.1);
+
+      const direction = state.ounceUsd >= prev ? 1 : -1;
+      updateAll(direction);
+    };
+
+    updateAll(1);
+    window.setInterval(tick, prefersReducedMotion ? 6000 : 1900);
+  </script>
+</BaseLayout>

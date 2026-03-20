@@ -1,0 +1,43 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { site } from "../config/site";
+---
+
+<BaseLayout title="سياسة الخصوصية" canonicalPath="/privacy">
+  <Header />
+
+  <main class="container py-14">
+    <h1 class="text-3xl font-extrabold text-white">سياسة الخصوصية</h1>
+    <p class="mt-4 max-w-3xl text-gray-300 leading-relaxed">
+      هذه صفحة تسويقية ثابتة للتعريف بتطبيق {site.name}. لا يقوم هذا الموقع بتسجيل حسابات ولا يتصل بقاعدة بيانات
+      التطبيق أو أي API خاص به.
+    </p>
+
+    <div class="mt-10 space-y-4 text-sm leading-relaxed text-gray-300">
+      <div class="glass rounded-3xl p-6">
+        <h2 class="text-base font-extrabold text-white">البيانات التي نجمعها</h2>
+        <p class="mt-3">
+          لا نجمع بيانات شخصية حساسة عبر هذا الموقع. قد يتم تسجيل بيانات تقنية قياسية على مستوى الاستضافة (مثل عنوان IP
+          وسجل الزيارات) حسب مزود الاستضافة.
+        </p>
+      </div>
+
+      <div class="glass rounded-3xl p-6">
+        <h2 class="text-base font-extrabold text-white">روابط وخدمات خارجية</h2>
+        <p class="mt-3">
+          قد يحتوي الموقع على روابط خارجية مثل واتساب أو روابط متاجر التطبيقات. تخضع هذه الخدمات لسياسات الخصوصية الخاصة
+          بها.
+        </p>
+      </div>
+
+      <div class="glass rounded-3xl p-6">
+        <h2 class="text-base font-extrabold text-white">تحديث السياسة</h2>
+        <p class="mt-3">قد نقوم بتحديث هذه السياسة عند الحاجة. استمرار استخدامك للموقع يعني موافقتك على النسخة المحدثة.</p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>

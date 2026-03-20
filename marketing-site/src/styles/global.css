@@ -1,0 +1,107 @@
+@import url("https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@200;300;400;500;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-dark-950 text-gray-200 font-sans;
+  direction: rtl;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.container {
+  @apply mx-auto max-w-6xl px-4;
+}
+
+.card {
+  @apply rounded-3xl border border-white/10 bg-babil-card shadow-luxury;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-babil-black;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-brand-600/30;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-brand-600/50;
+}
+
+::selection {
+  @apply bg-brand-900/30 text-brand-100;
+}
+
+/* Simple utility classes (kept local to the marketing site). */
+.bg-noise {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+.text-brand-gradient {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(180deg, #fff5d6 0%, #dccb96 45%, #a88836 100%);
+}
+
+.glass {
+  @apply border border-white/10 bg-white/5 backdrop-blur-xl;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-2xl bg-brand-600 px-5 py-3 text-sm font-bold text-dark-950 hover:bg-brand-500 shadow-brand;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-bold text-white hover:bg-white/10;
+}
+
+.price-flash {
+  will-change: text-shadow;
+}
+
+.flash-up {
+  animation: flashUp 900ms ease-out;
+}
+
+.flash-down {
+  animation: flashDown 900ms ease-out;
+}
+
+@keyframes flashUp {
+  0% {
+    text-shadow: 0 0 18px rgba(34, 197, 94, 0.45);
+  }
+  100% {
+    text-shadow: 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+@keyframes flashDown {
+  0% {
+    text-shadow: 0 0 18px rgba(239, 68, 68, 0.45);
+  }
+  100% {
+    text-shadow: 0 0 0 rgba(239, 68, 68, 0);
+  }
+}

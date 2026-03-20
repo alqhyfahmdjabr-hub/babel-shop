@@ -1,0 +1,43 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { site } from "../config/site";
+---
+
+<BaseLayout title="الشروط والأحكام" canonicalPath="/terms">
+  <Header />
+
+  <main class="container py-14">
+    <h1 class="text-3xl font-extrabold text-white">الشروط والأحكام</h1>
+    <p class="mt-4 max-w-3xl text-gray-300 leading-relaxed">
+      هذا الموقع مخصص للتعريف بتطبيق {site.name} وعرض معلومات عامة عنه. لا يعتبر هذا الموقع متجرًا إلكترونيًا ولا لوحة
+      تحكم للتطبيق.
+    </p>
+
+    <div class="mt-10 space-y-4 text-sm leading-relaxed text-gray-300">
+      <div class="glass rounded-3xl p-6">
+        <h2 class="text-base font-extrabold text-white">طبيعة المحتوى</h2>
+        <p class="mt-3">
+          كل المعلومات المعروضة هنا بهدف الشرح والتسويق فقط. أي مؤشرات أو أمثلة أو لقطات شاشة هي للاطلاع وقد تتغير ضمن
+          تحديثات التطبيق.
+        </p>
+      </div>
+
+      <div class="glass rounded-3xl p-6">
+        <h2 class="text-base font-extrabold text-white">الروابط الخارجية</h2>
+        <p class="mt-3">
+          قد يتضمن الموقع روابط خارجية (مثل واتساب أو متاجر التطبيقات). لسنا مسؤولين عن محتوى المواقع الخارجية أو
+          سياساتها.
+        </p>
+      </div>
+
+      <div class="glass rounded-3xl p-6">
+        <h2 class="text-base font-extrabold text-white">الاستخدام</h2>
+        <p class="mt-3">باستخدامك للموقع، فإنك توافق على هذه الشروط. إذا لم توافق، يرجى التوقف عن استخدام الموقع.</p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
