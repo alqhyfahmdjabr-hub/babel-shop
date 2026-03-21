@@ -167,6 +167,10 @@ security definer
 set search_path = public
 as $$
 begin
+  if pg_trigger_depth() > 1 then
+    return null;
+  end if;
+
   perform public.recalculate_gold_prices();
   return null;
 end;
