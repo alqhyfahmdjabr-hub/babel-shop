@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Check, Lock, LogOut, Paintbrush, Sliders, Sparkles, X } from 'lucide-react';
-import { PATTERNS } from '../constants';
+import { PATTERNS } from '../constants/patterns';
 import { AppPreferences } from '../types/types';
 
 interface SettingsModalProps {

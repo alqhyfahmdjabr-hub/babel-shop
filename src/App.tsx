@@ -1,5 +1,7 @@
 ﻿import { useState, useEffect, useRef, useCallback, Suspense, lazy, useMemo, useDeferredValue, type ChangeEvent, type FC } from 'react';
-import { CONTACT_INFO, QURAN_VERSE, BACKGROUND_LOGO_URL, DEFAULT_BACKGROUND_PATTERN_URL } from './constants';
+import { DEFAULT_BACKGROUND_PATTERN_URL, BACKGROUND_LOGO_URL } from './constants/background';
+import { CONTACT_INFO } from './constants/contact';
+import { QURAN_VERSE } from './constants/text';
 import { Product, ViewState, GoldPrice, AppPreferences, PricingSettings } from './types/types';
 import { toggleFavorite, getAppPreferences, saveAppPreferences, getFavorites  } from './services/storage';
 import { api } from './services/api';

@@ -1,6 +1,6 @@
 import { Preferences } from '@capacitor/preferences';
 import { ClientRequest, AppPreferences } from '../types/types';
-import { DEFAULT_BACKGROUND_PATTERN_URL } from '../constants';
+import { DEFAULT_BACKGROUND_PATTERN_URL } from '../constants/background';
 
 const STORAGE_KEYS = {
   FAVORITES: 'favorites',
