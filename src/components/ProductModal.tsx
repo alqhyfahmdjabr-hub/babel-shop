@@ -152,7 +152,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
         <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center px-6 animate-fade-in">
           <div className="w-full max-w-xs bg-[#0a0a0a] border border-gold-500/20 rounded-[2.5rem] p-6 shadow-2xl relative">
             <h4 className="text-gold-100 text-center font-serif text-lg mb-6 tracking-widest uppercase">
-              اختر الموظف للتواصل
+              اختر رقم للتواصل
             </h4>
             
             <div className="space-y-3">
@@ -163,7 +163,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
                   className="w-full py-4 rounded-2xl bg-white/[0.03] hover:bg-gold-500/10 border border-white/[0.05] hover:border-gold-500/30 text-gold-100/90 text-sm font-medium transition-all duration-500 flex items-center justify-center gap-2 group"
                 >
                   <MessageCircle className="w-4 h-4 text-gold-500/50 group-hover:text-gold-500" strokeWidth={1} />
-                  <span>الموظف {worker.name} - {worker.phone}</span>
+                  <span>الفرع {worker.name} - {worker.phone}</span>
                 </button>
               ))}
             </div>

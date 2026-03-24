@@ -21,7 +21,8 @@ import {
 import { api } from '../services/api';
 import { imageService } from '../services/imageService';
 import { supabase } from '../supabase-client';
-import { ClientRequest, GoldPrice, PricingSettings, Product } from '../types/types';
+import { ClientRequest, GoldPrice, OrderStatus, PricingSettings, Product } from '../types/types';
+import { getOrderStatusUi } from '../utils/orderStatus';
 
 interface DesignInspiration {
   id: string;
@@ -121,6 +122,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [isSavingPricingSettings, setIsSavingPricingSettings] = useState(false);
   const [showProductForm, setShowProductForm] = useState<Product | null>(null);
   const [orders, setOrders] = useState<ClientRequest[]>([]);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [inspirations, setInspirations] = useState<DesignInspiration[]>([]);
   const [isLoadingInspirations, setIsLoadingInspirations] = useState(false);
   const [inspirationForm, setInspirationForm] = useState<InspirationFormState>({
@@ -308,6 +310,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     } catch (error) {
       console.error('Delete order error:', error);
       alert('فشل حذف الطلب');
+    }
+  };
+
+  const handleUpdateOrderStatus = async (id: string, status: OrderStatus) => {
+    setUpdatingOrderId(id);
+    try {
+      await api.updateOrderStatus(id, status);
+      await fetchOrders();
+    } catch (error) {
+      console.error('Update order status error:', error);
+      alert('فشل تحديث حالة الطلب');
+    } finally {
+      setUpdatingOrderId((prev) => (prev === id ? null : prev));
     }
   };
 
@@ -549,37 +564,70 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
         {activeTab === 'orders' && (
           <div className="max-w-lg mx-auto space-y-3">
-            {orders.map((order) => (
-              <div key={order.id} className="bg-[#0f0f0f] border border-white/10 rounded-xl p-3">
-                <div className="flex gap-3">
-                  <img src={order.imageUrl} alt="Order" className="w-16 h-16 rounded-lg object-cover" />
-                  <div className="flex-1">
-                    <p className="font-bold text-gold-300">#{order.id.slice(0, 8)}</p>
-                    {order.profiles?.full_name && (
-                      <p className="text-xs text-gold-100 flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        {order.profiles.full_name}
+            {orders.map((order) => {
+              const statusUi = getOrderStatusUi(order.status);
+              const isUpdating = updatingOrderId === order.id;
+
+              return (
+                <div key={order.id} className="bg-[#0f0f0f] border border-white/10 rounded-xl p-3">
+                  <div className="flex gap-3">
+                    <img src={order.imageUrl} alt="Order" className="w-16 h-16 rounded-lg object-cover" />
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-bold text-gold-300">#{order.id.slice(0, 8)}</p>
+                          {order.profiles?.full_name && (
+                            <p className="text-xs text-gold-100 flex items-center gap-1">
+                              <User className="w-3 h-3" />
+                              {order.profiles.full_name}
+                            </p>
+                          )}
+                        </div>
+                        <span className={`shrink-0 px-2 py-1 rounded-full text-[11px] ${statusUi.badgeClass}`}>
+                          {statusUi.label}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+                        <Phone className="w-3 h-3" />
+                        {order.phone}
                       </p>
-                    )}
-                    <p className="text-xs text-gray-400 flex items-center gap-1">
-                      <Phone className="w-3 h-3" />
-                      {order.phone}
-                    </p>
-                    <p className="text-xs text-gray-400 flex items-center gap-1">
-                      <Ruler className="w-3 h-3" />
-                      {order.weight} جرام
-                    </p>
-                    <p className="text-xs text-gray-500 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {order.date}
-                    </p>
+                      <p className="text-xs text-gray-400 flex items-center gap-1">
+                        <Ruler className="w-3 h-3" />
+                        {order.weight} جرام
+                      </p>
+                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {order.date}
+                      </p>
+
+                      <div className="mt-2 flex items-center gap-2">
+                        <select
+                          className="flex-1 bg-black border border-gray-700 rounded-lg p-2 text-xs"
+                          title="حالة الطلب"
+                          aria-label="حالة الطلب"
+                          value={statusUi.status}
+                          disabled={isUpdating}
+                          onChange={(e) => void handleUpdateOrderStatus(order.id, e.target.value as OrderStatus)}
+                        >
+                          <option value="new">تم استلام الطلب</option>
+                          <option value="pending">قيد المراجعة</option>
+                          <option value="processing">قيد التنفيذ</option>
+                          <option value="completed">جاهز للاستلام</option>
+                          <option value="delivered">تم التسليم</option>
+                          <option value="cancelled">ملغي</option>
+                        </select>
+                        {isUpdating && <Loader2 className="w-4 h-4 animate-spin text-gold-400" aria-label="جاري تحديث الحالة" />}
+                      </div>
+                    </div>
+
+                    <button type="button" onClick={() => void handleDeleteOrder(order.id)} className="p-2 text-red-400" aria-label="حذف الطلب" title="حذف الطلب">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button type="button" onClick={() => void handleDeleteOrder(order.id)} className="p-2 text-red-400" aria-label="حذف الطلب" title="حذف الطلب">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

@@ -29,6 +29,7 @@ import type { Session } from '@supabase/supabase-js';
 
 // --- Performance Constants ---
 const ITEMS_PER_PAGE = 10;
+const HOME_FEATURED_COUNT = 6;
 const CONNECTION_TIMEOUT = 30000;
 const SCROLL_THRESHOLD = 500;
 type ProtectedAction = 'requests' | 'checkout' | 'admin';
@@ -500,6 +501,13 @@ const App: FC = () => {
     });
   }, [products, deferredSearchTerm, activeTab, favorites]);
 
+  const displayedProducts = useMemo(() => {
+    if (activeTab === 'home') {
+      return products.slice(0, HOME_FEATURED_COUNT);
+    }
+    return filteredProducts;
+  }, [activeTab, filteredProducts, products]);
+
   const isHomeTab = activeTab === 'home';
 
   // ==========================================
@@ -709,7 +717,7 @@ const App: FC = () => {
             )}
 
             {/* Search Bar */}
-            {(activeTab === 'home' || activeTab === 'catalog' || activeTab === 'favorites') && (
+            {(activeTab === 'catalog' || activeTab === 'favorites') && (
               <div className="relative mx-1 animate-slide-up group">
                 <div className="absolute inset-0 bg-gold-500/5 rounded-2xl blur-md group-hover:bg-gold-500/10 transition-colors duration-500" />
                 <input 
@@ -762,10 +770,10 @@ const App: FC = () => {
               <Suspense fallback={<ComponentLoader />}>
                 <RequestSection contact={CONTACT_INFO} prices={currentPrices} />
               </Suspense>
-            ) : filteredProducts.length > 0 ? (
+            ) : displayedProducts.length > 0 ? (
               <>
                 <div className="grid grid-cols-2 gap-5 md:gap-6 animate-fade-in">
-                  {filteredProducts.map(product => (
+                  {displayedProducts.map(product => (
                     <Suspense key={product.id} fallback={<ComponentLoader />}>
                       <ProductCard 
                         product={product} 
@@ -776,12 +784,12 @@ const App: FC = () => {
                     </Suspense>
                   ))}
                 </div>
-                {isLoadingMore && (
+                {activeTab !== 'home' && isLoadingMore && (
                   <div className="flex justify-center py-6 animate-fade-in">
                     <Loader2 className="w-6 h-6 text-gold-500 animate-spin" />
                   </div>
                 )}
-                {!hasMoreProducts && filteredProducts.length > ITEMS_PER_PAGE && (
+                {activeTab !== 'home' && !hasMoreProducts && filteredProducts.length > ITEMS_PER_PAGE && (
                   <p className="text-center text-gray-600 text-sm py-4">
                     لا يوجد المزيد من المنتجات
                   </p>

@@ -25,7 +25,7 @@ export interface ClientRequest {
   imageUrl?: string;
   notes?: string;
   date: string;
-  status?: 'new' | 'pending' | 'processing' | 'completed' | 'cancelled';
+  status?: 'new' | 'pending' | 'processing' | 'completed' | 'delivered' | 'cancelled';
   user_id?: string;
   profiles?: { full_name?: string, email?: string };
 }
@@ -79,7 +79,7 @@ export interface User {
 }
 
 // Order Status Types
-export type OrderStatus = 'new' | 'pending' | 'processing' | 'completed' | 'cancelled';
+export type OrderStatus = 'new' | 'pending' | 'processing' | 'completed' | 'delivered' | 'cancelled';
 
 // API Response Types
 export interface ApiResponse<T> {

@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { supabase } from '../supabase-client';
-import { ClientRequest, ContactInfo, GoldPrice } from '../types/types';
+import { ClientRequest, ContactInfo, GoldPrice, OrderStatus } from '../types/types';
+import { getOrderStatusUi } from '../utils/orderStatus';
 
 interface RequestSectionProps {
   contact: ContactInfo;
@@ -61,6 +62,7 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
 
   const [myOrders, setMyOrders] = useState<ClientRequest[]>([]);
   const [lastOrder, setLastOrder] = useState<ClientRequest | null>(null);
+  const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | OrderStatus>('all');
   const [pendingWhatsAppMessage, setPendingWhatsAppMessage] = useState('');
   const [inspirations, setInspirations] = useState<DesignInspiration[]>([]);
   const [selectedInspirationId, setSelectedInspirationId] = useState<string | null>(null);
@@ -97,6 +99,21 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
     () => inspirations.find((item) => item.id === selectedInspirationId) || null,
     [inspirations, selectedInspirationId]
   );
+
+  const orderStatusFilters: Array<{ key: 'all' | OrderStatus; label: string }> = [
+    { key: 'all', label: 'الكل' },
+    { key: 'new', label: 'تم استلام الطلب' },
+    { key: 'pending', label: 'قيد المراجعة' },
+    { key: 'processing', label: 'قيد التنفيذ' },
+    { key: 'completed', label: 'جاهز للاستلام' },
+    { key: 'delivered', label: 'تم التسليم' },
+    { key: 'cancelled', label: 'ملغي' }
+  ];
+
+  const visibleOrders = useMemo(() => {
+    if (orderStatusFilter === 'all') return myOrders;
+    return myOrders.filter((order) => (order.status ?? 'new') === orderStatusFilter);
+  }, [myOrders, orderStatusFilter]);
 
   useEffect(() => {
     if (activeView === 'track') {
@@ -355,30 +372,84 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
           <p className="text-gray-500">لا توجد طلبات حتى الآن</p>
         </div>
       ) : (
-        myOrders.map((order) => (
-          <div key={order.id} className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-4">
-            <div className="flex gap-3">
-              <img src={order.imageUrl} alt="order" className="w-20 h-20 rounded-xl object-cover" />
-              <div className="flex-1">
-                <p className="font-bold text-gold-200">طلب صياغة خاص</p>
-                <p className="text-[11px] text-gray-500">#{order.id.slice(0, 8)}</p>
-                <p className="text-xs text-gray-400">الوزن: {order.weight} جرام</p>
-              </div>
-            </div>
-            <div className="flex gap-2 mt-3">
-              <button className="flex-1 py-2 rounded-xl bg-white/5 text-sm" onClick={() => { setLastOrder(order); setPendingWhatsAppMessage(`*طلب صياغة جديد (#${order.id.slice(0, 8)})*`); setIsWorkerModalOpen(true); }}>
-                <MessageCircle className="w-4 h-4 inline ml-1" />متابعة واتساب
-              </button>
-              {new Date(order.date).toDateString() === new Date().toDateString() ? (
-                <button className="py-2 px-3 rounded-xl bg-red-500/10 text-red-400" onClick={() => void handleCancelOrder(order.id)}>
-                  <Trash2 className="w-4 h-4 inline ml-1" />إلغاء
+        <>
+          <div className="flex flex-wrap gap-2">
+            {orderStatusFilters.map((item) => {
+              const isActive = orderStatusFilter === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setOrderStatusFilter(item.key)}
+                  className={
+                    `px-3 py-1.5 rounded-full text-[11px] border ` +
+                    (isActive
+                      ? 'bg-gold-500/15 border-gold-500/30 text-gold-200'
+                      : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10')
+                  }
+                >
+                  {item.label}
                 </button>
-              ) : (
-                <div className="py-2 px-3 rounded-xl bg-gray-800/40 text-gray-600"><XCircle className="w-4 h-4 inline ml-1" />إلغاء</div>
-              )}
-            </div>
+              );
+            })}
           </div>
-        ))
+
+          {visibleOrders.length === 0 ? (
+            <div className="text-center py-12 border border-dashed border-gray-800 rounded-3xl">
+              <ClipboardList className="w-10 h-10 mx-auto text-gray-600 mb-2" />
+              <p className="text-gray-500">لا توجد طلبات بهذه الحالة</p>
+            </div>
+          ) : (
+            visibleOrders.map((order) => {
+              const statusUi = getOrderStatusUi(order.status);
+              return (
+                <div key={order.id} className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-4">
+                  <div className="flex gap-3">
+                    <img src={order.imageUrl} alt="order" className="w-20 h-20 rounded-xl object-cover" />
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-bold text-gold-200">طلب صياغة خاص</p>
+                          <p className="text-[11px] text-gray-500">#{order.id.slice(0, 8)}</p>
+                          <p className="text-xs text-gray-400">الوزن: {order.weight} جرام</p>
+                        </div>
+                        <span className={`shrink-0 px-2 py-1 rounded-full text-[11px] ${statusUi.badgeClass}`}>
+                          {statusUi.label}
+                        </span>
+                      </div>
+
+                      {statusUi.activeStep >= 0 && (
+                        <div className="mt-3">
+                          <div className="flex gap-1" aria-label="تقدم حالة الطلب">
+                            {statusUi.steps.map((step, idx) => (
+                              <div
+                                key={step.key}
+                                className={`h-1.5 flex-1 rounded-full ${idx <= statusUi.activeStep ? statusUi.stepOnClass : statusUi.stepOffClass}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 mt-3">
+                    <button className="flex-1 py-2 rounded-xl bg-white/5 text-sm" onClick={() => { setLastOrder(order); setPendingWhatsAppMessage(`*طلب صياغة جديد (#${order.id.slice(0, 8)})*`); setIsWorkerModalOpen(true); }}>
+                      <MessageCircle className="w-4 h-4 inline ml-1" />متابعة واتساب
+                    </button>
+                    {new Date(order.date).toDateString() === new Date().toDateString() ? (
+                      <button className="py-2 px-3 rounded-xl bg-red-500/10 text-red-400" onClick={() => void handleCancelOrder(order.id)}>
+                        <Trash2 className="w-4 h-4 inline ml-1" />إلغاء
+                      </button>
+                    ) : (
+                      <div className="py-2 px-3 rounded-xl bg-gray-800/40 text-gray-600"><XCircle className="w-4 h-4 inline ml-1" />إلغاء</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </>
       )}
     </div>
   );
@@ -414,11 +485,11 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
       {isWorkerModalOpen && (
         <div className="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm flex items-center justify-center px-4">
           <div className="w-full max-w-sm bg-[#111] border border-white/10 rounded-2xl p-5">
-            <h4 className="text-gold-300 font-bold mb-4 text-center">اختر الموظف للتواصل</h4>
+            <h4 className="text-gold-300 font-bold mb-4 text-center">اختر رقم للتواصل</h4>
             <div className="space-y-2">
               {contact.workers.map((worker) => (
                 <button key={worker.id} onClick={() => { window.open(`https://wa.me/967${worker.phone}?text=${pendingWhatsAppMessage}`, '_blank'); setIsWorkerModalOpen(false); setPendingWhatsAppMessage(''); }} className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-bold">
-                  الموظف {worker.name} - {worker.phone}
+                 فرع {worker.name} - {worker.phone}
                 </button>
               ))}
             </div>
