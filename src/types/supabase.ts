@@ -385,6 +385,10 @@ export interface Database {
         };
         Returns: Json;
       };
+      cancel_own_order: {
+        Args: { p_order_id: string };
+        Returns: undefined;
+      };
       current_auth_uid: {
         Args: Record<PropertyKey, never>;
         Returns: string | null;

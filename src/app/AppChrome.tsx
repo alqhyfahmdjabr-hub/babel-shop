@@ -23,7 +23,7 @@ export const AppChrome: React.FC<AppChromeProps> = ({
   return (
     <>
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-6 left-6 right-6 h-20 bg-[#080808]/80 backdrop-blur-xl border border-white/10 rounded-full z-40 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] max-w-md mx-auto">
+      <nav className="fixed h-20 bg-[#080808]/80 backdrop-blur-xl border border-white/10 rounded-full z-40 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] max-w-md mx-auto left-[max(1.5rem,env(safe-area-inset-left,0px))] right-[max(1.5rem,env(safe-area-inset-right,0px))] bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
         <div className="flex justify-around items-center h-full px-2">
           {[
             { id: 'home', icon: Home, label: 'الرئيسية' },
@@ -63,7 +63,8 @@ export const AppChrome: React.FC<AppChromeProps> = ({
       </nav>
 
       {/* Status Bar */}
-      <div className="fixed bottom-0 left-0 right-0 h-6 bg-[#020202] border-t border-white/10 flex items-center justify-between px-6 z-30">
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-[#020202] border-t border-white/10 pb-[env(safe-area-inset-bottom,0px)]">
+        <div className="h-6 flex items-center justify-between px-6">
         <div className="flex items-center gap-2 text-[9px] text-gray-500">
           <span
             className={`w-1.5 h-1.5 rounded-full ${
@@ -96,13 +97,14 @@ export const AppChrome: React.FC<AppChromeProps> = ({
             }`}
           />
         </button>
+        </div>
       </div>
 
       {/* Scroll to Top Button */}
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-28 right-6 w-10 h-10 bg-gold-600/20 backdrop-blur-sm border border-gold-500/30 rounded-full flex items-center justify-center text-gold-400 hover:bg-gold-600/30 transition-all z-30 animate-fade-in"
+          className="fixed w-10 h-10 bg-gold-600/20 backdrop-blur-sm border border-gold-500/30 rounded-full flex items-center justify-center text-gold-400 hover:bg-gold-600/30 transition-all z-30 animate-fade-in bottom-[calc(7rem+env(safe-area-inset-bottom,0px))] right-[max(1.5rem,env(safe-area-inset-right,0px))]"
           aria-label="العودة للأعلى"
           title="العودة للأعلى"
         >

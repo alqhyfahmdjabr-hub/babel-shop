@@ -1,9 +1,9 @@
-﻿import { useState, useEffect, useRef, useCallback, Suspense, lazy, useMemo, useDeferredValue, type ChangeEvent, type FC } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense, lazy, useMemo, useDeferredValue, type ChangeEvent, type FC } from 'react';
 import { DEFAULT_BACKGROUND_PATTERN_URL, BACKGROUND_LOGO_URL } from './constants/background';
 import { CONTACT_INFO } from './constants/contact';
 import { QURAN_VERSE } from './constants/text';
 import { Product, ViewState, GoldPrice, AppPreferences, PricingSettings } from './types/types';
-import { toggleFavorite, getAppPreferences, saveAppPreferences, getFavorites  } from './services/storage';
+import { clearLegacyServerBackedData, toggleFavorite, getAppPreferences, saveAppPreferences, getFavorites  } from './services/storage';
 import { api } from './services/api';
 import { supabase } from './supabase-client';
 // 🆕 NEW: Toast and Error Boundary imports
@@ -68,6 +68,7 @@ const App: FC = () => {
   const [favorites, setFavorites] = useState<string[]>([]);
   // أمر لجلب المفضلة من ذاكرة الهاتف فور تشغيل التطبيق
   useEffect(() => {
+    void clearLegacyServerBackedData();
     getFavorites().then(setFavorites);
   }, []);
 
@@ -113,6 +114,7 @@ const App: FC = () => {
 
   // Refs
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const prevSessionUserIdRef = useRef<string | null>(null);
 
   // ==========================================
   // 🛠️ Utility Functions
@@ -219,6 +221,22 @@ const App: FC = () => {
         checkUserRole(nextSession.user.id);
         if (event === 'SIGNED_IN') {
           success('تم تسجيل الدخول بنجاح');
+          if (nextSession.user.email) {
+            void Promise.all([
+              fetchWithTimeout(api.getPrices()),
+              fetchWithTimeout(api.getLatestOuncePriceUsd()),
+              fetchWithTimeout(api.getPricingSettings())
+            ])
+              .then(([prices, ounceUsd, settings]) => {
+                if (!isMounted) return;
+                setCurrentPrices(prices);
+                setLiveOunceUsd(ounceUsd);
+                setPricingSettings(settings ?? DEFAULT_PRICING_SETTINGS);
+              })
+              .catch((err) => {
+                console.error('Failed to refresh gold pricing after sign-in', err);
+              });
+          }
         }
       } else {
         setUserRole(null);
@@ -265,6 +283,19 @@ const App: FC = () => {
       closeAuthPrompt();
     }
   }, [session, pendingProtectedAction, userRole, closeAuthPrompt, success, showError]);
+
+  useEffect(() => {
+    const currentUserId = session?.user?.id ?? null;
+    const prevUserId = prevSessionUserIdRef.current;
+    prevSessionUserIdRef.current = currentUserId;
+
+    if (prevUserId) return;
+    if (!currentUserId) return;
+    if (!isAuthPromptOpen) return;
+    if (pendingProtectedAction) return;
+
+    closeAuthPrompt();
+  }, [session, isAuthPromptOpen, pendingProtectedAction, closeAuthPrompt]);
 
   useEffect(() => {
     if (!session && activeTab === 'requests') {
@@ -577,7 +608,7 @@ const App: FC = () => {
   // ==========================================
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-[#020202] font-sans pb-32 selection:bg-gold-900/30 selection:text-gold-100 relative overflow-hidden animate-fade-in text-gray-200">
+      <div className="min-h-screen bg-[#020202] font-sans pb-[max(8rem,env(safe-area-inset-bottom,0px))] selection:bg-gold-900/30 selection:text-gold-100 relative overflow-hidden animate-fade-in text-gray-200">
         {/* 🆕 NEW: Toast Notifications */}
         <ToastContainer toasts={toasts} onRemove={removeToast} />
         
@@ -613,7 +644,13 @@ const App: FC = () => {
 
         <div className="relative z-10">
           {/* Header */}
-          <header className={`relative px-6 text-center ${isHomeTab ? 'pt-5 pb-6' : 'pt-8 pb-10'}`}>
+          <header
+            className={`relative px-6 text-center ${
+              isHomeTab
+                ? 'pt-[max(1.25rem,env(safe-area-inset-top,0px))] pb-6'
+                : 'pt-[max(2rem,env(safe-area-inset-top,0px))] pb-10'
+            }`}
+          >
             <div className={`flex justify-between items-start ${isHomeTab ? 'mb-4' : 'mb-6'}`}>
               <button 
                 onClick={() => setIsSettingsOpen(true)} 

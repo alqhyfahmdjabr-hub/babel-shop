@@ -75,7 +75,7 @@ export const AppModals: React.FC<AppModalsProps> = ({
         <div className="fixed inset-0 z-[90] animate-fade-in">
           <button
             onClick={closeAuthPrompt}
-            className="absolute top-5 right-5 z-[95] p-2 bg-black/60 text-white rounded-full border border-white/20 hover:bg-black/80 transition-colors"
+            className="absolute z-[95] p-2 bg-black/60 text-white rounded-full border border-white/20 hover:bg-black/80 transition-colors top-[max(1.25rem,env(safe-area-inset-top,0px))] right-[max(1.25rem,env(safe-area-inset-right,0px))]"
             aria-label="Close login"
             title="Close login"
           >

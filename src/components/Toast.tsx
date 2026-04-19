@@ -71,7 +71,7 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 left-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+    <div className="fixed z-[100] flex flex-col gap-2 pointer-events-none top-[max(1rem,env(safe-area-inset-top,0px))] left-[max(1rem,env(safe-area-inset-left,0px))] right-[max(1rem,env(safe-area-inset-right,0px))]">
       <div className="max-w-sm mx-auto w-full flex flex-col gap-2 pointer-events-auto">
         {toasts.map(toast => (
           <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />

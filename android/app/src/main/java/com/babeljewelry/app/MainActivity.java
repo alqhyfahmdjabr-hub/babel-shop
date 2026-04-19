@@ -7,8 +7,8 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // 1. تفعيل ميزة Edge-to-Edge (ملء الشاشة خلف الأشرطة)
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        // محتوى الـ WebView داخل منطقة النظام الآمنة (لا رسم تحت شريط الحالة/التنقل)
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
         super.onCreate(savedInstanceState);
     }
 }

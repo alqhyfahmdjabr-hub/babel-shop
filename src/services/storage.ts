@@ -1,14 +1,14 @@
 import { Preferences } from '@capacitor/preferences';
-import { ClientRequest, AppPreferences } from '../types/types';
+import { AppPreferences } from '../types/types';
 import { DEFAULT_BACKGROUND_PATTERN_URL } from '../constants/background';
 
 const STORAGE_KEYS = {
   FAVORITES: 'favorites',
-  REQUESTS: 'requests',
   PREFERENCES: 'app_preferences',
-  CACHE: 'app_cache',
-  LAST_SYNC: 'last_sync'
+  CACHE: 'app_cache'
 };
+
+const LEGACY_SERVER_BACKED_KEYS = ['requests'] as const;
 
 // --- Favorites ---
 
@@ -52,56 +52,6 @@ export const isFavorite = async (productId: string): Promise<boolean> => {
 
 export const clearFavorites = async (): Promise<void> => {
   await Preferences.remove({ key: STORAGE_KEYS.FAVORITES });
-};
-
-// --- Client Requests ---
-
-export const getRequests = async (): Promise<ClientRequest[]> => {
-  try {
-    const { value } = await Preferences.get({ key: STORAGE_KEYS.REQUESTS });
-    return value ? JSON.parse(value) : [];
-  } catch (error) {
-    console.error('Error loading requests:', error);
-    return [];
-  }
-};
-
-export const saveRequest = async (request: ClientRequest): Promise<ClientRequest[]> => {
-  try {
-    const current = await getRequests();
-    const updated = [request, ...current];
-    
-    await Preferences.set({ 
-      key: STORAGE_KEYS.REQUESTS, 
-      value: JSON.stringify(updated) 
-    });
-    
-    return updated;
-  } catch (error) {
-    console.error('Error saving request:', error);
-    return [];
-  }
-};
-
-export const deleteRequest = async (requestId: string): Promise<ClientRequest[]> => {
-  try {
-    const current = await getRequests();
-    const updated = current.filter(r => r.id !== requestId);
-    
-    await Preferences.set({ 
-      key: STORAGE_KEYS.REQUESTS, 
-      value: JSON.stringify(updated) 
-    });
-    
-    return updated;
-  } catch (error) {
-    console.error('Error deleting request:', error);
-    return [];
-  }
-};
-
-export const clearRequests = async (): Promise<void> => {
-  await Preferences.remove({ key: STORAGE_KEYS.REQUESTS });
 };
 
 // --- App Preferences ---
@@ -199,22 +149,14 @@ export const clearCache = async (): Promise<void> => {
   await Preferences.remove({ key: STORAGE_KEYS.CACHE });
 };
 
-// --- Last Sync ---
-
-export const getLastSync = async (): Promise<number | null> => {
+export const clearLegacyServerBackedData = async (): Promise<void> => {
   try {
-    const { value } = await Preferences.get({ key: STORAGE_KEYS.LAST_SYNC });
-    return value ? parseInt(value, 10) : null;
-  } catch {
-    return null;
+    await Promise.all(
+      LEGACY_SERVER_BACKED_KEYS.map((key) => Preferences.remove({ key }))
+    );
+  } catch (error) {
+    console.error('Error clearing legacy server-backed data:', error);
   }
-};
-
-export const setLastSync = async (timestamp: number = Date.now()): Promise<void> => {
-  await Preferences.set({
-    key: STORAGE_KEYS.LAST_SYNC,
-    value: timestamp.toString()
-  });
 };
 
 // --- Clear All Data ---

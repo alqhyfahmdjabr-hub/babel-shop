@@ -8,6 +8,30 @@
 
 ## 1️⃣ إنشاء الملفات المفقودة
 
+### English Notes (Operational)
+
+#### Gold Price Updates (Supabase)
+
+- Data source: `public.price_history` stores source ounce snapshots (USD).
+- Display prices: `public.prices` stores derived gram buy/sell values (USD).
+- Pricing settings: `public.app_settings` stores `exchange_rate`, `buy_margin_percent`, and `sell_margin_percent`.
+- Edge Function: `supabase/functions/update-gold-prices` fetches ounce price and calls Postgres RPC `apply_gold_price_snapshot` using the service role key.
+- Cron: `pg_cron` job `update_gold_prices_every_5_min` runs every 5 minutes and executes `select util.invoke_update_gold_prices_secure();`.
+- Secret: the Edge Function is deployed with JWT verification disabled, but it still requires `CRON_SECRET` via `x-cron-secret` (or `Authorization: Bearer ...`).
+- Secret storage: `CRON_SECRET` must exist in Supabase Edge Secrets and in Postgres Vault as `cron_update_gold.x_cron_secret`.
+
+#### Deployment Commands
+
+```powershell
+npx supabase functions deploy update-gold-prices --no-verify-jwt --project-ref ulibmcqfuemefekyvrqj
+npx supabase db push
+```
+
+#### Troubleshooting
+
+- If `price_history` is stale: check Edge Function logs and ensure the cron job is active.
+- If you rotate `CRON_SECRET`: update it in Supabase Secrets and update the Vault secret `cron_update_gold.x_cron_secret` to match.
+
 ### `services/imageService.ts`
 خدمة إدارة الصور الجديدة:
 - ✅ ضغط الصور تلقائياً قبل الرفع

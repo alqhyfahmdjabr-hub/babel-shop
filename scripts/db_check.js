@@ -15,7 +15,7 @@ const { Client } = pg;
 const DATABASE_URL = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
 
 if (!DATABASE_URL) {
-  console.error('Error: DATABASE_URL is missing. Make sure it is in .env.local');
+  console.error('Error: DATABASE_URL or SUPABASE_DB_URL is missing. Provide it through the shell environment before running this script.');
   process.exit(1);
 }
 

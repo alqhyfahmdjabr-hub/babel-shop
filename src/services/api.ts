@@ -1,5 +1,5 @@
 ﻿import { supabase } from '../supabase-client';
-import { Product, GoldPrice, ClientRequest, PricingSettings } from '../types/types';
+import { Product, GoldPrice, ClientRequest, OrderStatus, PricingSettings } from '../types/types';
 
 // Table names as defined in database
 const TABLE_PRODUCTS = 'products';
@@ -15,14 +15,60 @@ type AppSettingsRow = {
   sell_margin_percent: number;
 };
 
-const getAuthenticatedEmailUser = async () => {
+const getAuthenticatedUser = async () => {
   const {
-    data: { user },
+    data: { session },
     error
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getSession();
 
-  if (error || !user?.email) {
+  if (error || !session?.user) {
     return null;
+  }
+
+  return session.user;
+};
+
+const getAuthenticatedEmailUser = async () => {
+  const user = await getAuthenticatedUser();
+
+  if (!user?.email) {
+    return null;
+  }
+
+  return user;
+};
+
+const requireAuthenticatedUser = async () => {
+  const user = await getAuthenticatedUser();
+
+  if (!user) {
+    throw new Error('يجب تسجيل الدخول أولاً');
+  }
+
+  return user;
+};
+
+const fetchProfileRole = async (userId: string): Promise<'admin' | 'user'> => {
+  const { data, error } = await supabase
+    .from(TABLE_PROFILES)
+    .select('role')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching role:', error);
+    return 'user';
+  }
+
+  return data?.role === 'admin' ? 'admin' : 'user';
+};
+
+const requireAdminUser = async () => {
+  const user = await requireAuthenticatedUser();
+  const role = await fetchProfileRole(user.id);
+
+  if (role !== 'admin') {
+    throw new Error('لا تملك صلاحية تنفيذ هذا الإجراء');
   }
 
   return user;
@@ -35,24 +81,13 @@ export const api = {
   // --- user role checks ---
   async getUserRole(): Promise<string | null> {
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const user = await getAuthenticatedUser();
 
-      if (authError || !user) {
+      if (!user) {
         return null;
       }
 
-      const { data, error } = await supabase
-        .from(TABLE_PROFILES)
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching role:', error);
-        return 'user';
-      }
-
-      return data?.role || 'user';
+      return await fetchProfileRole(user.id);
     } catch (err) {
       console.error('Unexpected error:', err);
       return 'user';
@@ -264,7 +299,7 @@ export const api = {
   // --- orders ---
   async submitOrder(order: Omit<ClientRequest, 'id'>): Promise<ClientRequest> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getAuthenticatedEmailUser();
       if (!user) throw new Error('\u064a\u062c\u0628 \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644 \u0623\u0648\u0644\u0627\u064b \u0644\u0625\u062a\u0645\u0627\u0645 \u0627\u0644\u0637\u0644\u0628');
       if (!order.imageUrl) {
         throw new Error('Order image is required');
@@ -294,7 +329,7 @@ export const api = {
 
   async getOrders(): Promise<ClientRequest[]> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getAuthenticatedEmailUser();
       if (!user) return [];
 
       const role = await this.getUserRole();
@@ -346,13 +381,30 @@ export const api = {
     }
   },
 
-  async deleteOrder(id: string): Promise<void> {
+  async cancelOwnOrder(id: string): Promise<void> {
     try {
+      await requireAuthenticatedUser();
+
+      const { error } = await supabase.rpc('cancel_own_order', {
+        p_order_id: id
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error cancelling own order:', error);
+      throw error;
+    }
+  },
+
+  async adminDeleteOrder(id: string): Promise<void> {
+    try {
+      await requireAdminUser();
+
       const { error } = await supabase
         .from(TABLE_ORDERS)
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
     } catch (error) {
       console.error('Error deleting order:', error);
@@ -360,13 +412,15 @@ export const api = {
     }
   },
 
-  async updateOrderStatus(id: string, status: string): Promise<void> {
+  async updateOrderStatus(id: string, status: OrderStatus): Promise<void> {
     try {
+      await requireAdminUser();
+
       const { error } = await supabase
         .from(TABLE_ORDERS)
         .update({ status })
         .eq('id', id);
-      
+
       if (error) throw error;
     } catch (error) {
       console.error('Error updating order status:', error);

@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  authGetUserMock: vi.fn(),
+  authGetSessionMock: vi.fn(),
   fromMock: vi.fn()
 }));
 
 vi.mock('../supabase-client', () => ({
   supabase: {
     auth: {
-      getUser: mocks.authGetUserMock
+      getSession: mocks.authGetSessionMock
     },
     from: mocks.fromMock
   }
@@ -18,12 +18,12 @@ import { api } from './api';
 
 describe('api auth gating (gold pricing)', () => {
   beforeEach(() => {
-    mocks.authGetUserMock.mockReset();
+    mocks.authGetSessionMock.mockReset();
     mocks.fromMock.mockReset();
   });
 
   it('getPrices: returns [] and does not query when no authenticated email', async () => {
-    mocks.authGetUserMock.mockResolvedValueOnce({ data: { user: null }, error: null });
+    mocks.authGetSessionMock.mockResolvedValueOnce({ data: { session: null }, error: null });
 
     const prices = await api.getPrices();
     expect(prices).toEqual([]);
@@ -31,7 +31,10 @@ describe('api auth gating (gold pricing)', () => {
   });
 
   it('getPricingSettings: returns null and does not query when no authenticated email', async () => {
-    mocks.authGetUserMock.mockResolvedValueOnce({ data: { user: { id: 'u1', email: null } }, error: null });
+    mocks.authGetSessionMock.mockResolvedValueOnce({
+      data: { session: { user: { id: 'u1', email: null } } },
+      error: null
+    });
 
     const settings = await api.getPricingSettings();
     expect(settings).toBeNull();
@@ -39,7 +42,10 @@ describe('api auth gating (gold pricing)', () => {
   });
 
   it('getLatestOuncePriceUsd: returns null and does not query when no authenticated email', async () => {
-    mocks.authGetUserMock.mockResolvedValueOnce({ data: { user: { id: 'u1' } }, error: null });
+    mocks.authGetSessionMock.mockResolvedValueOnce({
+      data: { session: { user: { id: 'u1' } } },
+      error: null
+    });
 
     const latest = await api.getLatestOuncePriceUsd();
     expect(latest).toBeNull();
@@ -47,7 +53,10 @@ describe('api auth gating (gold pricing)', () => {
   });
 
   it('getPrices: queries DB when authenticated email exists', async () => {
-    mocks.authGetUserMock.mockResolvedValueOnce({ data: { user: { id: 'u1', email: 'a@b.com' } }, error: null });
+    mocks.authGetSessionMock.mockResolvedValueOnce({
+      data: { session: { user: { id: 'u1', email: 'a@b.com' } } },
+      error: null
+    });
 
     const orderMock = vi.fn().mockResolvedValueOnce({
       data: [

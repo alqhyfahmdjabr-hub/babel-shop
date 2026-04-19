@@ -305,7 +305,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleDeleteOrder = async (id: string) => {
     if (!confirm('هل تريد حذف هذا الطلب نهائيًا؟')) return;
     try {
-      await api.deleteOrder(id);
+      await api.adminDeleteOrder(id);
       await fetchOrders();
     } catch (error) {
       console.error('Delete order error:', error);

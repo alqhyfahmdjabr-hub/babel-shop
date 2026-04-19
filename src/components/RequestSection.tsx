@@ -47,6 +47,23 @@ const pieceTypeLabel: Record<'ring' | 'necklace' | 'bracelet' | 'custom', string
   custom: 'مخصص'
 };
 
+const saudiDateFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Riyadh',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit'
+});
+
+const toSaudiDateKey = (value: string | Date) => {
+  const parsed = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return '';
+  }
+
+  return saudiDateFormatter.format(parsed);
+};
+
 export const RequestSection: React.FC<RequestSectionProps> = ({
   contact,
   prices
@@ -114,6 +131,10 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
     if (orderStatusFilter === 'all') return myOrders;
     return myOrders.filter((order) => (order.status ?? 'new') === orderStatusFilter);
   }, [myOrders, orderStatusFilter]);
+
+  const canUserCancelOrder = (order: ClientRequest) =>
+    toSaudiDateKey(order.date) === toSaudiDateKey(new Date()) &&
+    ['new', 'pending'].includes(order.status ?? 'new');
 
   useEffect(() => {
     if (activeView === 'track') {
@@ -281,8 +302,14 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
   const handleCancelOrder = async (orderId: string) => {
     if (!confirm('هل تريد إلغاء هذا الطلب؟')) return;
     try {
-      await api.deleteOrder(orderId);
-      setMyOrders((prev) => prev.filter((item) => item.id !== orderId));
+      await api.cancelOwnOrder(orderId);
+      setMyOrders((prev) =>
+        prev.map((item) =>
+          item.id === orderId
+            ? { ...item, status: 'cancelled' }
+            : item
+        )
+      );
     } catch (error) {
       console.error(error);
       alert('فشل إلغاء الطلب');
@@ -402,6 +429,7 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
           ) : (
             visibleOrders.map((order) => {
               const statusUi = getOrderStatusUi(order.status);
+              const canCancelOrder = canUserCancelOrder(order);
               return (
                 <div key={order.id} className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-4">
                   <div className="flex gap-3">
@@ -437,7 +465,7 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
                     <button className="flex-1 py-2 rounded-xl bg-white/5 text-sm" onClick={() => { setLastOrder(order); setPendingWhatsAppMessage(`*طلب صياغة جديد (#${order.id.slice(0, 8)})*`); setIsWorkerModalOpen(true); }}>
                       <MessageCircle className="w-4 h-4 inline ml-1" />متابعة واتساب
                     </button>
-                    {new Date(order.date).toDateString() === new Date().toDateString() ? (
+                    {canCancelOrder ? (
                       <button className="py-2 px-3 rounded-xl bg-red-500/10 text-red-400" onClick={() => void handleCancelOrder(order.id)}>
                         <Trash2 className="w-4 h-4 inline ml-1" />إلغاء
                       </button>

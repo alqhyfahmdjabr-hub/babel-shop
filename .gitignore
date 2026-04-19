@@ -11,7 +11,14 @@ node_modules
 dist
 dist-ssr
 .astro
+.env
+.env.*
+!.env.example
 *.local
+android/keystore.properties
+android/**/*.jks
+android/**/*.keystore
+android/**/*.pem
 
 # Editor directories and files
 .vscode/*

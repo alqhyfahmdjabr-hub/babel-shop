@@ -4,4 +4,6 @@
     <color name="colorPrimaryDark">#8B6508</color>
     <color name="colorAccent">#FFD700</color>
     <color name="status_bar_color">#FFFFFF</color>
+    <!-- يطابق خلفية التطبيق عند عدم استخدام edge-to-edge -->
+    <color name="window_system_bar">#020202</color>
 </resources>
