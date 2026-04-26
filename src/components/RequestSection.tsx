@@ -333,11 +333,11 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
   };
 
   const renderCreateView = (
-    <form onSubmit={handleSubmit} className="space-y-4 bg-[#0A0A0A] p-5 rounded-3xl border border-white/10">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl border border-white/10 bg-[#0A0A0A] p-4 sm:p-5">
       <h3 className="text-2xl font-serif text-gold-100">الاستوديو الذكي</h3>
       <label className="block text-xs text-gray-400" htmlFor="request-piece-name">اسم القطعة</label>
       <input id="request-piece-name" className="w-full rounded-xl bg-[#121212] p-3 border border-gray-700" value={pieceName} onChange={(e) => setPieceName(e.target.value)} placeholder="اكتب اسم القطعة..." />
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button type="button" onClick={() => { setPieceName('خاتم'); setPieceType('ring'); }} className="px-3 py-1 rounded-full border border-gold-500/30">خاتم</button>
         <button type="button" onClick={() => { setPieceName('عقد'); setPieceType('necklace'); }} className="px-3 py-1 rounded-full border border-gold-500/30">عقد</button>
         <button type="button" onClick={() => { setPieceName('سوار'); setPieceType('bracelet'); }} className="px-3 py-1 rounded-full border border-gold-500/30">سوار</button>
@@ -378,7 +378,7 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
       <label className="text-xs text-gray-400 flex items-center gap-2" htmlFor="request-notes"><FileText className="w-4 h-4 text-gold-500" />ملاحظات</label>
       <textarea id="request-notes" rows={3} className="w-full rounded-xl bg-[#121212] p-3 border border-gray-700" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} />
 
-      <div className="bg-orange-500/5 border border-orange-500/20 p-3 rounded-xl text-[11px] text-orange-200/80 flex gap-2">
+      <div className="flex gap-2 rounded-xl border border-orange-500/20 bg-orange-500/5 p-3 text-[11px] text-orange-200/80">
         <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
         <span>بعد الإرسال يمكنك متابعة الحالة من تبويب "متابعة طلباتي".</span>
       </div>
@@ -484,7 +484,7 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
 
   if (isSuccess) {
     return (
-      <div className="bg-[#0A0A0A] p-8 rounded-[2.5rem] border border-gold-500/20 text-center">
+      <div className="rounded-[2.5rem] border border-gold-500/20 bg-[#0A0A0A] p-6 text-center sm:p-8">
         <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
         <h3 className="text-2xl font-serif text-gold-100 mb-2">تم استلام طلبك بنجاح</h3>
         <button onClick={openWorkerPickerForOrder} className="w-full py-4 rounded-2xl bg-[#25D366] text-white font-bold mb-3">
@@ -496,8 +496,8 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
   }
 
   return (
-    <div className="animate-fade-in pb-12">
-      <div className="flex bg-[#0D0D0D] p-1.5 rounded-2xl mb-8 border border-white/[0.05]">
+    <div className="animate-fade-in pb-6 sm:pb-8">
+      <div className="mb-8 flex rounded-2xl border border-white/[0.05] bg-[#0D0D0D] p-1">
         <button onClick={() => setActiveView('create')} className={`flex-1 py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 ${activeView === 'create' ? 'bg-[#181818] text-gold-400 border border-gold-500/20' : 'text-gray-600'}`}>
           <Camera className="w-4 h-4" />طلب جديد
         </button>
@@ -511,7 +511,7 @@ export const RequestSection: React.FC<RequestSectionProps> = ({
       </div>
 
       {isWorkerModalOpen && (
-        <div className="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm flex items-center justify-center px-4">
+        <div className="fixed inset-0 z-[90] modal-safe flex items-center justify-center bg-black/70 backdrop-blur-sm">
           <div className="w-full max-w-sm bg-[#111] border border-white/10 rounded-2xl p-5">
             <h4 className="text-gold-300 font-bold mb-4 text-center">اختر رقم للتواصل</h4>
             <div className="space-y-2">

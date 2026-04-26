@@ -8,6 +8,16 @@
     @apply box-border;
   }
 
+  :root {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --app-gutter: clamp(1rem, 4vw, 1.5rem);
+    --app-content-max: 42rem;
+    --app-content-max-wide: 48rem;
+  }
+
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
@@ -17,8 +27,13 @@
   body {
     @apply bg-dark-950 text-gray-200 font-sans;
     direction: rtl;
-    min-height: 100vh;
+    min-height: 100dvh;
     overflow-x: hidden;
+    background-color: #020202;
+  }
+
+  #root {
+    min-height: 100dvh;
   }
 
   /* Custom Scrollbar */
@@ -106,6 +121,30 @@
   /* Toast Container */
   .toast-container {
     @apply fixed top-4 left-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none;
+  }
+
+  .app-shell {
+    min-height: 100dvh;
+    padding-bottom: calc(8.5rem + var(--safe-bottom));
+  }
+
+  .app-container {
+    width: min(100%, calc(var(--app-content-max) + (var(--app-gutter) * 2)));
+    margin-inline: auto;
+    padding-inline: max(var(--app-gutter), var(--safe-left), var(--safe-right));
+  }
+
+  .app-container-wide {
+    width: min(100%, calc(var(--app-content-max-wide) + (var(--app-gutter) * 2)));
+    margin-inline: auto;
+    padding-inline: max(var(--app-gutter), var(--safe-left), var(--safe-right));
+  }
+
+  .modal-safe {
+    padding-top: max(1rem, var(--safe-top));
+    padding-right: max(1rem, var(--safe-right));
+    padding-bottom: max(1rem, var(--safe-bottom));
+    padding-left: max(1rem, var(--safe-left));
   }
 
   /* Line Clamp */
@@ -230,6 +269,10 @@
 @media (max-width: 640px) {
   html {
     font-size: 14px;
+  }
+
+  .app-shell {
+    padding-bottom: calc(7.75rem + var(--safe-bottom));
   }
 }
 

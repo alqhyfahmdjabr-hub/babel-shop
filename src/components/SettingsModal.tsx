@@ -45,13 +45,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const patternSelectionDisabled = !preferences.backgroundPattern;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-[60] modal-safe flex items-center justify-center">
       <div
         className="absolute inset-0 bg-black/80 backdrop-blur-md animate-fade-in"
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] border border-gold-600/30 bg-[#0F0F0F] shadow-2xl animate-scale-up">
+      <div className="relative max-h-[min(82dvh,44rem)] w-full max-w-md overflow-hidden rounded-[2.5rem] border border-gold-600/30 bg-[#0F0F0F] shadow-2xl animate-scale-up">
         <div className="flex items-center justify-between border-b border-gray-800/50 bg-neutral-900/80 p-6">
           <h2 className="flex items-center gap-2 text-xl font-serif font-bold text-gold-500">
             <Sliders className="h-5 w-5" />

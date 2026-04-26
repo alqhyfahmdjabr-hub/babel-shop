@@ -23,8 +23,8 @@ export const AppChrome: React.FC<AppChromeProps> = ({
   return (
     <>
       {/* Bottom Navigation */}
-      <nav className="fixed h-20 bg-[#080808]/80 backdrop-blur-xl border border-white/10 rounded-full z-40 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] max-w-md mx-auto left-[max(1.5rem,env(safe-area-inset-left,0px))] right-[max(1.5rem,env(safe-area-inset-right,0px))] bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
-        <div className="flex justify-around items-center h-full px-2">
+      <nav className="fixed z-40 mx-auto h-[4.5rem] max-w-md rounded-full border border-white/10 bg-[#080808]/85 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] backdrop-blur-xl left-[max(1rem,env(safe-area-inset-left,0px))] right-[max(1rem,env(safe-area-inset-right,0px))] bottom-[calc(0.9rem+env(safe-area-inset-bottom,0px))] sm:h-20 sm:left-[max(1.5rem,env(safe-area-inset-left,0px))] sm:right-[max(1.5rem,env(safe-area-inset-right,0px))] sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
+        <div className="flex h-full items-center justify-around px-1.5 sm:px-2">
           {[
             { id: 'home', icon: Home, label: 'الرئيسية' },
             { id: 'catalog', icon: Grid, label: 'المعرض' },
@@ -34,7 +34,7 @@ export const AppChrome: React.FC<AppChromeProps> = ({
             <button
               key={item.id}
               onClick={() => handleTabChange(item.id as ViewState)}
-              className="flex flex-col items-center justify-center w-16 h-full space-y-1.5 transition-all duration-500 group relative"
+              className="group relative flex h-full max-w-[4.5rem] min-w-0 flex-1 flex-col items-center justify-center space-y-1 transition-all duration-500 sm:space-y-1.5"
             >
               {activeTab === item.id && (
                 <div className="absolute top-0 w-8 h-1 bg-gold-500 rounded-b-full shadow-[0_2px_10px_rgba(212,175,55,0.5)]" />
@@ -49,7 +49,7 @@ export const AppChrome: React.FC<AppChromeProps> = ({
                 fill={activeTab === item.id && item.id === 'favorites' ? 'currentColor' : 'none'}
               />
               <span
-                className={`text-[9px] font-bold tracking-wide transition-all duration-300 ${
+                className={`pointer-events-none text-[8px] font-bold tracking-wide transition-all duration-300 sm:text-[9px] ${
                   activeTab === item.id
                     ? 'text-gold-100 opacity-100 translate-y-0'
                     : 'text-gray-600 opacity-0 translate-y-2'
@@ -63,8 +63,8 @@ export const AppChrome: React.FC<AppChromeProps> = ({
       </nav>
 
       {/* Status Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-[#020202] border-t border-white/10 pb-[env(safe-area-inset-bottom,0px)]">
-        <div className="h-6 flex items-center justify-between px-6">
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/10 bg-[#020202]/95 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-xl">
+        <div className="flex min-h-[1.75rem] items-center justify-between gap-3 px-[max(1rem,env(safe-area-inset-left,0px))] text-[9px] sm:h-6 sm:px-6">
         <div className="flex items-center gap-2 text-[9px] text-gray-500">
           <span
             className={`w-1.5 h-1.5 rounded-full ${
@@ -86,7 +86,7 @@ export const AppChrome: React.FC<AppChromeProps> = ({
         <button
           onClick={refreshData}
           disabled={isRefreshing}
-          className="flex items-center gap-1.5 text-[9px] text-gold-600 hover:text-gold-400 transition-colors group"
+          className="group flex items-center gap-1.5 text-[9px] text-gold-600 transition-colors hover:text-gold-400"
         >
           <span>تحديث البيانات</span>
           <RefreshCw
@@ -104,7 +104,7 @@ export const AppChrome: React.FC<AppChromeProps> = ({
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed w-10 h-10 bg-gold-600/20 backdrop-blur-sm border border-gold-500/30 rounded-full flex items-center justify-center text-gold-400 hover:bg-gold-600/30 transition-all z-30 animate-fade-in bottom-[calc(7rem+env(safe-area-inset-bottom,0px))] right-[max(1.5rem,env(safe-area-inset-right,0px))]"
+          className="fixed z-30 flex h-10 w-10 items-center justify-center rounded-full border border-gold-500/30 bg-gold-600/20 text-gold-400 backdrop-blur-sm transition-all hover:bg-gold-600/30 animate-fade-in bottom-[calc(6.2rem+env(safe-area-inset-bottom,0px))] right-[max(1rem,env(safe-area-inset-right,0px))] sm:bottom-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:right-[max(1.5rem,env(safe-area-inset-right,0px))]"
           aria-label="العودة للأعلى"
           title="العودة للأعلى"
         >
@@ -114,4 +114,3 @@ export const AppChrome: React.FC<AppChromeProps> = ({
     </>
   );
 };
-

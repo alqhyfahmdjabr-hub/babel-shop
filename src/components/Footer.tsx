@@ -1,4 +1,3 @@
-
 import { ContactInfo } from '../types/types';
 import { Phone, Smartphone } from 'lucide-react';
 
@@ -8,60 +7,63 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ contact }) => {
   return (
-    <footer className="bg-neutral-900 border-t border-gold-900/30 pt-10 pb-24 px-4 text-center">
+    <footer className="border-t border-gold-900/30 bg-neutral-900 pt-10 pb-[calc(7.75rem+env(safe-area-inset-bottom,0px))] text-center">
+      <div className="app-container">
+        <div className="mx-auto mb-8 max-w-md">
+          <h3 className="gold-text-gradient mb-6 font-serif text-2xl font-bold">ط§طھطµظ„ ط¨ظ†ط§</h3>
 
-      <div className="max-w-md mx-auto mb-8">
-        <h3 className="gold-text-gradient font-serif text-2xl font-bold mb-6">اتصل بنا</h3>
-
-        <div className="space-y-4 text-sm">
-          {/* Manager */}
-          <div className="flex items-center justify-center gap-3 text-gold-200">
-            <Smartphone className="w-5 h-5" />
-            <span className="font-bold">الادارة:</span>
-            <a href={`tel:${contact.manager}`} dir="ltr" className="font-mono hover:text-white">{contact.manager}</a>
-          </div>
-
-          {/* Workers */}
-          <div className="flex flex-col gap-2">
-            <span className="text-gray-400 font-bold">خدمة العملاء (واتساب/اتصال):</span>
-            <div className="flex flex-wrap justify-center gap-4">
-              {contact.workers.map((worker) => (
-                <a key={worker.id} href={`tel:${worker.phone}`} dir="ltr" className="bg-white/5 px-3 py-1 rounded-full text-gray-300 font-mono text-xs border border-white/10 hover:border-gold-500/50 transition-colors">
-                  {worker.phone}
-                </a>
-              ))}
+          <div className="space-y-4 text-sm">
+            <div className="flex items-center justify-center gap-3 text-gold-200">
+              <Smartphone className="h-5 w-5" />
+              <span className="font-bold">ط§ظ„ط§ط¯ط§ط±ط©:</span>
+              <a href={`tel:${contact.manager}`} dir="ltr" className="font-mono hover:text-white">
+                {contact.manager}
+              </a>
             </div>
-          </div>
 
-          {/* Landlines */}
-          <div className="flex flex-col gap-2 mt-4">
-            <span className="text-gray-400 font-bold flex items-center justify-center gap-2">
-              <Phone className="w-4 h-4" /> الهاتف الثابت:
-            </span>
-            <div className="flex flex-wrap justify-center gap-4">
-              {contact.landlines.map((num, idx) => (
-                <span key={idx} dir="ltr" className="text-gray-400 font-mono text-xs">
-                  {num}
-                </span>
-              ))}
+            <div className="flex flex-col gap-2">
+              <span className="font-bold text-gray-400">ط®ط¯ظ…ط© ط§ظ„ط¹ظ…ظ„ط§ط، (ظˆط§طھط³ط§ط¨/ط§طھطµط§ظ„):</span>
+              <div className="flex flex-wrap justify-center gap-4">
+                {contact.workers.map((worker) => (
+                  <a
+                    key={worker.id}
+                    href={`tel:${worker.phone}`}
+                    dir="ltr"
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-mono text-gray-300 transition-colors hover:border-gold-500/50"
+                  >
+                    {worker.phone}
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-2">
+              <span className="flex items-center justify-center gap-2 font-bold text-gray-400">
+                <Phone className="h-4 w-4" /> ط§ظ„ظ‡ط§طھظپ ط§ظ„ط«ط§ط¨طھ:
+              </span>
+              <div className="flex flex-wrap justify-center gap-4">
+                {contact.landlines.map((num, idx) => (
+                  <span key={idx} dir="ltr" className="font-mono text-xs text-gray-400">
+                    {num}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Divider */}
-      <div className="h-px w-24 bg-gradient-to-r from-transparent via-gold-700 to-transparent mx-auto mb-6"></div>
+        <div className="mx-auto mb-6 h-px w-24 bg-gradient-to-r from-transparent via-gold-700 to-transparent" />
 
-      {/* Credits */}
-      <div className="text-xs text-gray-600 space-y-2">
-        <p>&copy; {new Date().getFullYear()} مجوهرات بابل. جميع الحقوق محفوظة.</p>
-        <div className="flex items-center justify-center gap-2">
-          <span>تصميم وتطوير:</span>
-          <span className="text-gold-500 font-bold">{contact.designer.name}</span>
+        <div className="space-y-2 text-xs text-gray-600">
+          <p>&copy; {new Date().getFullYear()} ظ…ط¬ظˆظ‡ط±ط§طھ ط¨ط§ط¨ظ„. ط¬ظ…ظٹط¹ ط§ظ„ط­ظ‚ظˆظ‚ ظ…ط­ظپظˆط¸ط©.</p>
+          <div className="flex items-center justify-center gap-2">
+            <span>طھطµظ…ظٹظ… ظˆطھط·ظˆظٹط±:</span>
+            <span className="font-bold text-gold-500">{contact.designer.name}</span>
+          </div>
+          <a href={`tel:${contact.designer.phone}`} dir="ltr" className="block font-mono text-gray-500 hover:text-gold-400">
+            {contact.designer.phone}
+          </a>
         </div>
-        <a href={`tel:${contact.designer.phone}`} dir="ltr" className="block text-gray-500 hover:text-gold-400 font-mono">
-          {contact.designer.phone}
-        </a>
       </div>
     </footer>
   );

@@ -115,7 +115,7 @@ const PriceCard: React.FC<{ price: DisplayPrice; exchangeRate: number }> = ({ pr
   }, []);
 
   return (
-    <div className={`rounded-2xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#111111] via-[#0B0B0B] to-[#141414] p-4 md:p-5 shadow-[0_10px_30px_-18px_rgba(255,223,0,0.45)] transition-all duration-500 ${isLockedToReal ? 'ring-1 ring-[#FFDF00]/60 shadow-[0_0_35px_rgba(255,223,0,0.28)]' : ''}`}>
+    <div className={`rounded-2xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#111111] via-[#0B0B0B] to-[#141414] p-4 shadow-[0_10px_30px_-18px_rgba(255,223,0,0.45)] transition-all duration-500 sm:p-5 ${isLockedToReal ? 'ring-1 ring-[#FFDF00]/60 shadow-[0_0_35px_rgba(255,223,0,0.28)]' : ''}`}>
       <div className="mb-4 flex items-center justify-between">
         <div className="rounded-xl border border-[#D4AF37]/30 bg-[#17130a] px-3 py-1.5 text-sm font-serif font-bold tracking-wide text-[#F6D574]">
           عيار {price.karat}
@@ -219,9 +219,9 @@ export const GoldTicker: React.FC<GoldTickerProps> = ({ prices, liveOunceUsd, pr
   }, []);
 
   return (
-    <div className="mb-12 w-full">
+    <div className="mb-10 w-full sm:mb-12">
       <div className="mb-4 text-center">
-        <h3 className="font-serif text-xl tracking-wide text-[#FFDF00] md:text-2xl">
+        <h3 className="font-serif text-[clamp(1.15rem,5vw,1.5rem)] tracking-wide text-[#FFDF00]">
           أسعار الذهب العالمية المحدثة لحظيًا
         </h3>
         <p className="mt-1 text-[11px] uppercase tracking-[0.25em] text-gold-300/50">
@@ -229,10 +229,10 @@ export const GoldTicker: React.FC<GoldTickerProps> = ({ prices, liveOunceUsd, pr
         </p>
       </div>
 
-      <div className="relative overflow-hidden rounded-[2.5rem] border border-[#D4AF37]/20 bg-[#0D0D0D]/80 shadow-[0_25px_90px_-40px_rgba(212,175,55,0.55)] backdrop-blur-2xl">
-        <div className="border-b border-[#D4AF37]/15 bg-gradient-to-r from-[#120f03] via-[#0b0b0b] to-[#120f03] p-6">
+      <div className="relative overflow-hidden rounded-[2rem] border border-[#D4AF37]/20 bg-[#0D0D0D]/80 shadow-[0_25px_90px_-40px_rgba(212,175,55,0.55)] backdrop-blur-2xl sm:rounded-[2.5rem]">
+        <div className="border-b border-[#D4AF37]/15 bg-gradient-to-r from-[#120f03] via-[#0b0b0b] to-[#120f03] p-4 sm:p-6">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className={`relative overflow-hidden rounded-2xl border border-[#D4AF37]/35 bg-[radial-gradient(circle_at_top,_rgba(255,223,0,0.24),_rgba(15,15,15,0.95)_60%)] p-5 transition-all duration-500 ${isOunceLockedToReal ? 'ring-1 ring-[#FFDF00]/70 shadow-[0_0_40px_rgba(255,223,0,0.35)]' : ''}`}>
+            <div className={`relative overflow-hidden rounded-2xl border border-[#D4AF37]/35 bg-[radial-gradient(circle_at_top,_rgba(255,223,0,0.24),_rgba(15,15,15,0.95)_60%)] p-4 transition-all duration-500 sm:p-5 ${isOunceLockedToReal ? 'ring-1 ring-[#FFDF00]/70 shadow-[0_0_40px_rgba(255,223,0,0.35)]' : ''}`}>
               <div className="pointer-events-none absolute inset-0">
                 <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,223,0,0.10)_0%,rgba(255,223,0,0)_38%,rgba(255,223,0,0.14)_62%,rgba(255,223,0,0)_100%)] animate-[pulse_3.2s_ease-in-out_infinite]" />
                 <div className="absolute inset-x-0 bottom-2 h-10 bg-[linear-gradient(90deg,transparent_0%,rgba(255,223,0,0.25)_45%,transparent_100%)] blur-md animate-[pulse_2.6s_ease-in-out_infinite]" />
@@ -249,12 +249,12 @@ export const GoldTicker: React.FC<GoldTickerProps> = ({ prices, liveOunceUsd, pr
                 </span>
               </div>
               <p className="relative z-10 mb-1 text-xs text-[#EAD49B]/80">USD</p>
-              <p className="relative z-10 text-2xl font-bold text-[#FFDF00] drop-shadow-[0_0_12px_rgba(255,223,0,0.4)] md:text-3xl">
+              <p className="relative z-10 text-[clamp(1.5rem,7vw,1.875rem)] font-bold text-[#FFDF00] drop-shadow-[0_0_12px_rgba(255,223,0,0.4)]">
                 {displayLiveUsd !== null ? formatMoney(displayLiveUsd, 'USD') : '--'}
               </p>
             </div>
 
-            <div className={`relative overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#111111] via-[#0B0B0B] to-[#131313] p-5 transition-all duration-500 ${isOunceLockedToReal ? 'ring-1 ring-[#FFDF00]/45 shadow-[0_0_32px_rgba(255,223,0,0.22)]' : ''}`}>
+            <div className={`relative overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#111111] via-[#0B0B0B] to-[#131313] p-4 transition-all duration-500 sm:p-5 ${isOunceLockedToReal ? 'ring-1 ring-[#FFDF00]/45 shadow-[0_0_32px_rgba(255,223,0,0.22)]' : ''}`}>
               <div className="pointer-events-none absolute inset-0">
                 <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(255,223,0,0.07)_0%,rgba(255,223,0,0)_40%,rgba(255,223,0,0.12)_68%,rgba(255,223,0,0)_100%)] animate-[pulse_3.5s_ease-in-out_infinite]" />
                 <div className="absolute inset-x-0 bottom-1 h-9 bg-[linear-gradient(90deg,transparent_0%,rgba(212,175,55,0.22)_50%,transparent_100%)] blur-md animate-[pulse_2.9s_ease-in-out_infinite]" />
@@ -264,7 +264,7 @@ export const GoldTicker: React.FC<GoldTickerProps> = ({ prices, liveOunceUsd, pr
                 <span className="text-[10px] uppercase tracking-[0.24em] text-[#C9B279]">SAR</span>
               </div>
               <p className="relative z-10 mb-1 text-xs text-[#C9B279]/80">Saudi Riyal</p>
-              <p className="relative z-10 text-2xl font-bold text-[#F6D574] md:text-3xl">
+              <p className="relative z-10 text-[clamp(1.5rem,7vw,1.875rem)] font-bold text-[#F6D574]">
                 {displayLiveSar !== null ? formatMoney(displayLiveSar, 'SAR') : '--'}
               </p>
               <p className="relative z-10 mt-2 text-[10px] text-[#8f7d50]">{`1 USD = ${exchangeRate} SAR`}</p>
@@ -272,7 +272,7 @@ export const GoldTicker: React.FC<GoldTickerProps> = ({ prices, liveOunceUsd, pr
           </div>
         </div>
 
-        <div className="grid gap-4 p-5 md:p-6">
+        <div className="grid gap-4 p-4 sm:p-5 md:p-6">
           {displayPrices.map((price) => (
             <PriceCard key={price.karat} price={price} exchangeRate={exchangeRate} />
           ))}

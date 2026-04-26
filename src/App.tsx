@@ -546,7 +546,7 @@ const App: FC = () => {
   // ==========================================
   if (isGlobalLoading) {
     return (
-      <div className="min-h-screen bg-[#020202] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[#020202] flex items-center justify-center">
         <Loader2 className="w-10 h-10 text-gold-500 animate-spin" />
       </div>
     );
@@ -554,7 +554,7 @@ const App: FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#020202] flex flex-col items-center justify-center relative overflow-hidden z-50">
+      <div className="min-h-[100dvh] bg-[#020202] flex flex-col items-center justify-center relative overflow-hidden z-50">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] opacity-[0.03]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gold-900/20 via-[#020202] to-[#020202]" />
         
@@ -570,7 +570,7 @@ const App: FC = () => {
             </div>
           </div>
           
-          <h1 className="text-6xl md:text-7xl font-serif tracking-wide mb-3 opacity-0 animate-slide-up anim-delay-300">
+          <h1 className="mb-3 font-serif text-[clamp(3rem,16vw,4.75rem)] tracking-wide opacity-0 animate-slide-up anim-delay-300">
             <span className="bg-clip-text text-transparent bg-gradient-to-b from-[#FFF5D6] via-[#F4D03F] to-[#B7950B]">بابل</span>
           </h1>
           
@@ -608,7 +608,7 @@ const App: FC = () => {
   // ==========================================
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-[#020202] font-sans pb-[max(8rem,env(safe-area-inset-bottom,0px))] selection:bg-gold-900/30 selection:text-gold-100 relative overflow-hidden animate-fade-in text-gray-200">
+      <div className="app-shell bg-[#020202] font-sans selection:bg-gold-900/30 selection:text-gold-100 relative overflow-hidden animate-fade-in text-gray-200">
         {/* 🆕 NEW: Toast Notifications */}
         <ToastContainer toasts={toasts} onRemove={removeToast} />
         
@@ -645,7 +645,7 @@ const App: FC = () => {
         <div className="relative z-10">
           {/* Header */}
           <header
-            className={`relative px-6 text-center ${
+            className={`app-container relative text-center ${
               isHomeTab
                 ? 'pt-[max(1.25rem,env(safe-area-inset-top,0px))] pb-6'
                 : 'pt-[max(2rem,env(safe-area-inset-top,0px))] pb-10'
@@ -675,7 +675,7 @@ const App: FC = () => {
             </div>
             
             <div className={`flex flex-col items-center justify-center animate-slide-up ${isHomeTab ? 'space-y-1.5' : 'space-y-2'}`}>
-              <h1 className={`font-serif tracking-wide drop-shadow-2xl relative ${isHomeTab ? 'text-5xl md:text-7xl mb-1' : 'text-6xl md:text-8xl mb-2'}`}>
+              <h1 className={`relative mb-2 font-serif tracking-wide drop-shadow-2xl ${isHomeTab ? 'text-[clamp(3rem,12vw,4.75rem)]' : 'text-[clamp(3.5rem,14vw,5.5rem)]'}`}>
                 <span className="bg-clip-text text-transparent bg-gradient-to-b from-[#FFF5D6] via-[#DCCB96] to-[#A88836] drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]">بابل</span>
               </h1>
               <div className={`flex items-center uppercase font-serif text-gold-400/60 ${isHomeTab ? 'gap-3 text-[9px] md:text-[11px] tracking-[0.35em]' : 'gap-4 text-[10px] md:text-xs tracking-[0.5em]'}`}>
@@ -687,7 +687,7 @@ const App: FC = () => {
                 {HOME_TRUST_BADGES.map((item, idx) => (
                   <div 
                     key={idx}
-                    className={`rounded-full bg-gold-900/20 border border-gold-500/20 backdrop-blur-sm flex items-center shadow-lg shadow-black/20 ${isHomeTab ? 'px-2.5 py-1 gap-1.5' : 'px-3 py-1.5 gap-2'}`}
+                    className={`flex items-center rounded-full border border-gold-500/20 bg-gold-900/20 shadow-lg shadow-black/20 backdrop-blur-sm ${isHomeTab ? 'gap-1.5 px-2.5 py-1' : 'gap-2 px-3 py-1.5'}`}
                   >
                     <item.icon className="w-3 h-3 text-gold-400" />
                     <span className={`${isHomeTab ? 'text-[9px]' : 'text-[10px]'} text-gold-200 font-bold tracking-wide`}>{item.text}</span>
@@ -709,13 +709,13 @@ const App: FC = () => {
           </header>
 
           {/* Main Content */}
-          <main className="max-w-xl mx-auto px-6 relative z-10 space-y-10 min-h-[500px]">
+          <main className="app-container relative z-10 min-h-[500px] space-y-[clamp(2rem,5vw,2.75rem)]">
             {activeTab === 'home' && (
               <Suspense fallback={<ComponentLoader />}>
                 {canViewGoldPricing ? (
                   <GoldTicker prices={currentPrices} liveOunceUsd={liveOunceUsd} pricingSettings={pricingSettings} />
                 ) : (
-                  <div className="relative overflow-hidden rounded-[2.5rem] border border-gold-500/15 bg-[#0D0D0D]/85 p-6 text-center shadow-[0_25px_90px_-40px_rgba(212,175,55,0.28)]">
+                  <div className="relative overflow-hidden rounded-[2.5rem] border border-gold-500/15 bg-[#0D0D0D]/85 p-5 text-center shadow-[0_25px_90px_-40px_rgba(212,175,55,0.28)] sm:p-6">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(212,175,55,0.12),_transparent_55%)]" />
                     <div className="relative z-10 space-y-3">
                       <p className="text-xs uppercase tracking-[0.35em] text-gold-400/60">Gold Pricing Access</p>
@@ -733,7 +733,7 @@ const App: FC = () => {
                     </div>
                   </div>
                 )}
-                <div className="grid grid-cols-3 gap-3 animate-fade-in mb-8">
+                <div className="mb-8 grid grid-cols-3 gap-2 animate-fade-in sm:gap-3">
                   {[
                     { icon: Crown, title: 'موديلات حصرية', subtitle: 'ومتجددة' },
                     { icon: BadgeCheck, title: 'سعر مضمون', subtitle: 'ومنافس للسوق' },
@@ -741,7 +741,7 @@ const App: FC = () => {
                   ].map((item, idx) => (
                     <div 
                       key={idx}
-                      className="bg-[#111] border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-2.5 group hover:border-gold-500/20 hover:bg-gold-500/5 transition-all duration-500 shadow-lg"
+                      className="group flex flex-col items-center justify-center gap-2 rounded-2xl border border-white/5 bg-[#111] p-3 text-center shadow-lg transition-all duration-500 hover:border-gold-500/20 hover:bg-gold-500/5 sm:gap-2.5 sm:p-4"
                     >
                       <item.icon className="w-6 h-6 text-gold-600 group-hover:text-gold-400 transition-colors" strokeWidth={1.5} />
                       <span className="text-[10px] text-gray-400 group-hover:text-gold-100 font-medium leading-tight font-serif tracking-wide">
@@ -755,7 +755,7 @@ const App: FC = () => {
 
             {/* Search Bar */}
             {(activeTab === 'catalog' || activeTab === 'favorites') && (
-              <div className="relative mx-1 animate-slide-up group">
+              <div className="group relative mx-0.5 animate-slide-up sm:mx-1">
                 <div className="absolute inset-0 bg-gold-500/5 rounded-2xl blur-md group-hover:bg-gold-500/10 transition-colors duration-500" />
                 <input 
                   ref={searchInputRef}
@@ -763,14 +763,14 @@ const App: FC = () => {
                   placeholder="ابحث عن قطعة نادرة..." 
                   value={searchTerm} 
                   onChange={handleSearch}
-                  className="relative w-full bg-[#0A0A0A] border border-white/10 rounded-2xl py-5 pr-14 pl-12 text-gold-100 focus:outline-none focus:border-gold-500/40 focus:shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all duration-500 placeholder-gray-600 text-sm font-sans shadow-xl"
+                  className="relative w-full rounded-2xl border border-white/10 bg-[#0A0A0A] py-4 pl-10 pr-12 text-sm font-sans text-gold-100 shadow-xl transition-all duration-500 placeholder-gray-600 focus:border-gold-500/40 focus:outline-none focus:shadow-[0_0_15px_rgba(212,175,55,0.1)] sm:py-5 sm:pl-12 sm:pr-14"
                 />
-                <Search className="absolute right-6 top-5 w-5 h-5 text-gray-500 group-hover:text-gold-400 transition-colors duration-500 z-10" />
+                <Search className="absolute right-4 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-gray-500 transition-colors duration-500 group-hover:text-gold-400 sm:right-6" />
                 {searchTerm && (
                   <button
                     type="button"
                     onClick={clearSearch}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-gold-400 transition-colors"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 p-1 text-gray-500 transition-colors hover:text-gold-400 sm:left-4"
                     aria-label="مسح البحث"
                     title="مسح البحث"
                   >
@@ -809,7 +809,7 @@ const App: FC = () => {
               </Suspense>
             ) : displayedProducts.length > 0 ? (
               <>
-                <div className="grid grid-cols-2 gap-5 md:gap-6 animate-fade-in">
+                <div className="grid grid-cols-2 gap-3 animate-fade-in sm:gap-5 md:gap-6">
                   {displayedProducts.map(product => (
                     <Suspense key={product.id} fallback={<ComponentLoader />}>
                       <ProductCard 
@@ -886,4 +886,3 @@ const App: FC = () => {
 };
 
 export default App;
-

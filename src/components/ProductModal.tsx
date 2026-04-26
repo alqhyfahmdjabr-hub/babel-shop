@@ -38,7 +38,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
 
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center sm:px-4">
+    <div className="fixed inset-0 z-[80] modal-safe flex items-end justify-center sm:items-center sm:px-4">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-[#050505]/95 backdrop-blur-md animate-fade-in"
@@ -46,13 +46,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
       ></div>
 
       {/* Modal Card Container */}
-      <div className="relative w-full sm:max-w-md bg-babil-card sm:rounded-[3rem] rounded-t-[3rem] shadow-2xl animate-slide-up border border-white/[0.05] max-h-[95vh] flex flex-col">
+      <div className="relative flex max-h-[min(92dvh,48rem)] w-full max-w-lg flex-col rounded-t-[3rem] border border-white/[0.05] bg-babil-card shadow-2xl animate-slide-up sm:rounded-[3rem]">
 
         {/* Close Button - Larger touch area & Fixed position */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-6 left-6 z-50 p-3 bg-black/40 backdrop-blur-xl rounded-full text-white/80 hover:text-white border border-white/10 transition-colors duration-500 hover:bg-black/60"
+          className="absolute left-4 top-4 z-50 rounded-full border border-white/10 bg-black/40 p-3 text-white/80 backdrop-blur-xl transition-colors duration-500 hover:bg-black/60 hover:text-white sm:left-6 sm:top-6"
           aria-label="إغلاق"
           title="إغلاق"
         >
@@ -63,7 +63,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
         <div className="overflow-y-auto flex-1 overscroll-contain no-scrollbar">
 
           {/* Product Image Area - Taller */}
-          <div className="relative h-[55vh] sm:h-[450px] w-full shrink-0">
+          <div className="relative h-[48vh] min-h-[18rem] w-full shrink-0 sm:h-[450px]">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-babil-card z-10"></div>
             <img
               src={product.imageUrl}
@@ -72,7 +72,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
             />
 
             {/* Karat Tag on Image */}
-            <div className="absolute bottom-8 right-8 z-20">
+            <div className="absolute bottom-6 right-5 z-20 sm:bottom-8 sm:right-8">
               <div className="flex items-center gap-2 bg-black/40 backdrop-blur-xl px-5 py-2 rounded-full border border-white/[0.05]">
                 <Star className="w-3 h-3 text-gold-400 fill-gold-400" />
                 <span className="text-gold-100 font-serif text-sm tracking-widest">عيار {product.karat}</span>
@@ -81,7 +81,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
           </div>
 
           {/* Content Area */}
-          <div className="relative px-8 pt-2 pb-8 -mt-10 bg-babil-card rounded-t-[3rem] border-t border-white/[0.02] z-20 space-y-8 min-h-[200px]">
+          <div className="relative z-20 -mt-10 min-h-[200px] space-y-6 rounded-t-[3rem] border-t border-white/[0.02] bg-babil-card px-5 pb-8 pt-2 sm:space-y-8 sm:px-8">
 
             {/* Header */}
             <div className="text-center pt-4">
@@ -96,7 +96,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
             </div>
 
             {/* Specs Grid */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <div className="py-6 px-4 rounded-[2rem] bg-white/[0.01] border border-white/[0.02] flex flex-col items-center justify-center gap-3 group hover:border-gold-500/10 transition-colors duration-700">
                 <Scale className="w-5 h-5 text-gray-600 group-hover:text-gold-500/50 transition-colors duration-500" strokeWidth={1} />
                 <div className="text-center">
@@ -149,7 +149,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose, co
 
       {/* --- نافذة اختيار العامل الجديدة --- */}
       {isWorkerModalOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center px-6 animate-fade-in">
+        <div className="fixed inset-0 z-[100] modal-safe flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in">
           <div className="w-full max-w-xs bg-[#0a0a0a] border border-gold-500/20 rounded-[2.5rem] p-6 shadow-2xl relative">
             <h4 className="text-gold-100 text-center font-serif text-lg mb-6 tracking-widest uppercase">
               اختر رقم للتواصل

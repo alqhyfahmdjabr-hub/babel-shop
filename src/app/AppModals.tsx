@@ -82,7 +82,7 @@ export const AppModals: React.FC<AppModalsProps> = ({
             <X className="w-5 h-5" />
           </button>
           <Suspense fallback={fallback}>
-            <LoginScreen />
+            <LoginScreen contact={contact} />
           </Suspense>
         </div>
       )}
@@ -114,4 +114,3 @@ export const AppModals: React.FC<AppModalsProps> = ({
     </>
   );
 };
-
