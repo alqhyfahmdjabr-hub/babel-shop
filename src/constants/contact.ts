@@ -10,7 +10,7 @@ export const CONTACT_INFO: ContactInfo = {
   ],
   landlines: ['02451445', '02451944'],
   designer: {
-    name: 'أحمد جابر',
+    name: 'احمد جابر',
     phone: '783447222'
   }
 };
